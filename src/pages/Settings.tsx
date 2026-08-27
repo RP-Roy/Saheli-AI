@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import {
-  User, Bell, Shield, Phone, ChevronRight,
-  Lock, Eye, EyeOff, Plus, Trash2, FlaskConical, Info,
-  LogOut, MapPin, Smartphone, BellOff, Check,
+  User, Bell, ChevronRight,
+  Lock, Eye, EyeOff, FlaskConical, Info,
+  LogOut, MapPin, Smartphone, Check,
 } from 'lucide-react';
-import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useApp } from '../context/AppContext';
 import { useDemo } from '../context/DemoContext';
-import { TRUSTED_CONTACTS, type Contact } from '../data/mockData';
+import { EmergencyCircle } from '../components/emergency/EmergencyCircle';
 import { cn } from '../utils/formatters';
 
 export default function Settings() {
@@ -107,19 +106,8 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* ── Trusted Circle ── */}
-      <section className="glass-card overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-white/10 flex items-center gap-2">
-          <Phone className="w-4 h-4 text-primary-400" />
-          <h2 className="text-sm font-bold text-white">Trusted Circle</h2>
-          <Button variant="outline" size="sm" className="ml-auto" leftIcon={<Plus className="w-3.5 h-3.5" />}>Add</Button>
-        </div>
-        <div className="divide-y divide-white/5">
-          {TRUSTED_CONTACTS.map(contact => (
-            <TrustedContactRow key={contact.id} contact={contact} />
-          ))}
-        </div>
-      </section>
+      {/* ── Emergency Circle ── */}
+      <EmergencyCircle />
 
       {/* ── Notifications ── */}
       <section className="glass-card overflow-hidden">
@@ -219,30 +207,6 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* ── Safety Settings ── */}
-      <section className="glass-card overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-white/10 flex items-center gap-2">
-          <Shield className="w-4 h-4 text-primary-400" />
-          <h2 className="text-sm font-bold text-white">Safety Settings</h2>
-        </div>
-        <div className="divide-y divide-white/5">
-          {[
-            { id: 'checkin-timeout',   label: 'Check-in Timeout',     value: '60 seconds' },
-            { id: 'deviation',         label: 'Deviation Threshold',  value: '200 meters' },
-            { id: 'stop-threshold',    label: 'Stop Alert Threshold', value: '2 minutes'  },
-            { id: 'auto-escalate',     label: 'Auto-Escalate',        value: 'Enabled'    },
-          ].map(({ id, label, value }) => (
-            <div key={id} className="flex items-center justify-between px-5 py-3.5">
-              <p className="text-sm text-slate-300">{label}</p>
-              <div className="flex items-center gap-2">
-                <Badge variant="primary">{value}</Badge>
-                <ChevronRight className="w-4 h-4 text-slate-600" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── App Info & Logout ── */}
       <section className="glass-card overflow-hidden">
         <div className="divide-y divide-white/5">
@@ -302,23 +266,6 @@ function SettingsRow({ icon, label, value, action }: {
       <p className="text-sm text-slate-300 flex-1">{label}</p>
       {value && <p className="text-xs text-slate-500">{value}</p>}
       {action === 'chevron' && <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0" />}
-    </div>
-  );
-}
-
-function TrustedContactRow({ contact }: { contact: Contact }) {
-  return (
-    <div className="flex items-center gap-3 px-5 py-3.5">
-      <div className={cn('w-9 h-9 rounded-full bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white flex-shrink-0', contact.color)}>
-        {contact.avatar}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-200">{contact.name}</p>
-        <p className="text-xs text-slate-500">{contact.relation} · {contact.phone}</p>
-      </div>
-      <button className="w-7 h-7 rounded-lg bg-surface-600/60 hover:bg-danger-600/20 border border-white/10 hover:border-danger-500/30 flex items-center justify-center text-slate-500 hover:text-danger-400 transition-all">
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
     </div>
   );
 }

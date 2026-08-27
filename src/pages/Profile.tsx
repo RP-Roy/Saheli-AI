@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  User, Bell, Shield, Phone, ChevronRight,
-  Lock, Eye, EyeOff, Plus, Trash2, FlaskConical, Info
+  User, Bell, Shield,
+  Lock, Eye, EyeOff, FlaskConical, Info
 } from 'lucide-react';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useApp } from '../context/AppContext';
 import { useDemo } from '../context/DemoContext';
-import { cn } from '../utils/formatters';
+import { EmergencyCircle } from '../components/emergency/EmergencyCircle';
 
 // ─── Profile / Settings Page ──────────────────────────────────────────────────
 
 export default function Profile() {
-  const { user, trustedContacts, notificationsEnabled, setNotificationsEnabled } = useApp();
+  const { user, notificationsEnabled, setNotificationsEnabled } = useApp();
   const { isDemoMode, toggleDemoMode } = useDemo();
   const [showPhone, setShowPhone] = useState(false);
 
@@ -89,36 +89,8 @@ export default function Profile() {
         </CardBody>
       </Card>
 
-      {/* Trusted contacts */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-primary-400" />
-              <h2 className="section-title text-base">Trusted Circle</h2>
-            </div>
-            <Button variant="outline" size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />}>
-              Add
-            </Button>
-          </div>
-        </CardHeader>
-        <CardBody className="space-y-3 !pt-0">
-          {trustedContacts.map(contact => (
-            <div key={contact.id} className="flex items-center gap-3 p-3 rounded-xl bg-surface-700/40">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
-                {contact.avatar}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-200">{contact.name}</p>
-                <p className="text-xs text-slate-500">{contact.relation} · {contact.phone}</p>
-              </div>
-              <button className="w-7 h-7 rounded-lg bg-surface-600 hover:bg-danger-600/30 border border-white/10 hover:border-danger-500/30 flex items-center justify-center text-slate-500 hover:text-danger-400 transition-all duration-200">
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </CardBody>
-      </Card>
+      {/* Trusted contacts Emergency Circle */}
+      <EmergencyCircle />
 
       {/* Notifications */}
       <Card>
@@ -174,7 +146,6 @@ export default function Profile() {
               <p className="text-sm font-medium text-slate-300">{label}</p>
               <div className="flex items-center gap-2">
                 <Badge variant="primary">{value}</Badge>
-                <ChevronRight className="w-4 h-4 text-slate-600" />
               </div>
             </div>
           ))}
@@ -202,18 +173,19 @@ export default function Profile() {
           ))}
         </CardBody>
       </Card>
-
-      <div className="text-center text-slate-600 text-xs pb-4">
-        Saheli AI v1.0.0-beta · Built for safety, with care
-      </div>
     </div>
   );
 }
 
-// ─── Setting Row ──────────────────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SettingRow({
-  id, label, description, toggle, toggleValue, onToggle
+  id,
+  label,
+  description,
+  toggle,
+  toggleValue,
+  onToggle,
 }: {
   id: string;
   label: string;
@@ -223,26 +195,26 @@ function SettingRow({
   onToggle?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 min-w-0">
+    <div className="flex items-center justify-between py-1">
+      <div className="flex-1 min-w-0 pr-4">
         <p className="text-sm font-medium text-slate-200">{label}</p>
-        {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+        {description && <p className="text-xs text-slate-400 mt-0.5">{description}</p>}
       </div>
       {toggle && (
         <button
           id={id}
-          onClick={onToggle}
-          className={cn(
-            'relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200',
-            toggleValue ? 'bg-primary-600' : 'bg-surface-600',
-          )}
           role="switch"
           aria-checked={toggleValue}
+          onClick={onToggle}
+          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+            toggleValue ? 'bg-primary-600' : 'bg-surface-600'
+          }`}
         >
-          <span className={cn(
-            'absolute top-1 left-0 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200',
-            toggleValue ? 'translate-x-6' : 'translate-x-1',
-          )} />
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              toggleValue ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
         </button>
       )}
     </div>
