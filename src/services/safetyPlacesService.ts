@@ -71,10 +71,19 @@ export const safetyPlacesService = {
         out body;
       `;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
       const res = await fetch(OVERPASS_URL, {
         method: 'POST',
-        body: query
-      });
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'User-Agent': 'SaheliSafetyApp/1.0 (https://saheli.ai)',
+        },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
       if (!res.ok) throw new Error(`Overpass API error: ${res.status}`);
       const data = await res.json();
       

@@ -15,7 +15,7 @@ export function Header({ title }: HeaderProps) {
   const { user } = useApp();
 
   return (
-    <header className="lg:pl-64 sticky top-0 z-20 bg-surface-900/90 backdrop-blur-md border-b border-white/10">
+    <header className="sticky top-0 z-20 bg-surface-900/90 backdrop-blur-md border-b border-white/10">
       <div className="flex items-center gap-3 px-4 sm:px-6 py-3">
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-2 mr-auto">

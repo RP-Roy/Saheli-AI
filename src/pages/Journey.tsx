@@ -21,6 +21,7 @@ import { useJourneyMonitor } from '../hooks/useJourneyMonitor';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { LocationAutocomplete } from '../components/ui/LocationAutocomplete';
 import type { GeocodingResult } from '../services/geocodingService';
+import { journeyService } from '../services/journeyService';
 
 export default function Journey() {
   const {
@@ -85,12 +86,32 @@ export default function Journey() {
   };
 
   const handleStartJourney = () => {
-    const originLabel = isDemoMode ? origin : 'Your Location';
+    const originLabel = isDemoMode ? origin : (loc.latitude ? 'Current Location' : 'Start Point');
     const destLabel = isDemoMode ? dest : (realDest?.name || 'Destination');
     startJourney(selectedRoute, originLabel, destLabel);
+
+    if (selectedRoute.waypoints.length > 0) {
+      const startWp = selectedRoute.waypoints[0];
+      const endWp = selectedRoute.waypoints[selectedRoute.waypoints.length - 1];
+      journeyService.createJourney({
+        user_id: 'user_active_session',
+        start_lat: startWp.lat,
+        start_lng: startWp.lng,
+        destination_name: destLabel,
+        destination_lat: endWp.lat,
+        destination_lng: endWp.lng,
+        expected_duration_minutes: selectedRoute.etaMins,
+        route_safety_score: selectedRoute.routeSafetyResult?.score ?? 75,
+        risk_level: (selectedRoute.routeSafetyResult?.score ?? 75) > 80 ? 'SAFE' : 'CAUTION',
+        status: 'ACTIVE',
+      }).catch((err: any) => console.warn('Supabase createJourney background log:', err));
+    }
   };
 
   const handleEndJourney = () => {
+    if (journey.id) {
+      journeyService.endJourney(journey.id).catch((err: any) => console.warn('Supabase endJourney background log:', err));
+    }
     endJourney();
     setLocalPhase('PLANNING');
   };
@@ -112,8 +133,17 @@ export default function Journey() {
     setIsRerouting(true);
     setRerouteMessage(null);
     try {
-      const coords = `${journey.currentPosition.lat},${journey.currentPosition.lng}`;
-      const routes = await routeService.generateSafeRoutes(coords, journey.destination, isDemoMode);
+      const originParam = isDemoMode
+        ? 'College'
+        : { latitude: journey.currentPosition.lat, longitude: journey.currentPosition.lng };
+
+      const destParam = isDemoMode
+        ? 'Home'
+        : (journey.plannedRoute.length > 0
+            ? { latitude: journey.plannedRoute[journey.plannedRoute.length - 1].lat, longitude: journey.plannedRoute[journey.plannedRoute.length - 1].lng }
+            : (realDest ? { latitude: realDest.lat, longitude: realDest.lon } : { latitude: journey.currentPosition.lat + 0.01, longitude: journey.currentPosition.lng + 0.01 }));
+
+      const routes = await routeService.generateSafeRoutes(originParam, destParam, isDemoMode);
       
       const bestNewRoute = routes.reduce((best, curr) => 
         (curr.routeSafetyResult?.score ?? 0) > (best.routeSafetyResult?.score ?? 0) ? curr : best
@@ -121,18 +151,16 @@ export default function Journey() {
       
       const bestScore = bestNewRoute?.routeSafetyResult?.score ?? 0;
       
-      if (bestScore < journey.routeSafetyScore + 5) {
-        setRerouteMessage("No significantly better route was found right now.");
-        setRerouteOptions([]);
+      if (bestScore < journey.routeSafetyScore + 3 && routes.length <= 1) {
+        setRerouteMessage("Current path already provides optimal safety coverage.");
+        setRerouteOptions(routes);
       } else {
         setRerouteOptions(routes);
         if (routes.length > 0) setSelectedRerouteId(routes[0].id);
       }
     } catch (error: any) {
-      console.error(error);
-      setIsRerouting(false);
-      // In a real app we might show a toast here. For now it just closes the modal or stops loading.
-      alert(error.message || 'Failed to find alternative route.');
+      console.error('Rerouting error:', error);
+      setRerouteMessage(error.message || 'Failed to calculate alternative route.');
     } finally {
       setIsLoading(false);
     }

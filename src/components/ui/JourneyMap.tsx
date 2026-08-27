@@ -63,11 +63,24 @@ function currentPositionHtml(color: string) {
 }
 
 function safetyPointHtml(type: string) {
-  const icon = type === 'POLICE' ? '👮' : type === 'HOSPITAL' ? '🏥' : type === 'WELL_LIT' ? '💡' : type === 'OTHER_PUBLIC' ? '☕' : '🏪';
+  const icon = 
+    type === 'POLICE' ? '👮' :
+    type === 'HOSPITAL' ? '🏥' :
+    type === 'PHARMACY' ? '🏪' :
+    type === 'FUEL' ? '⛽' :
+    type === 'HOTEL' ? '🏨' :
+    type === 'SHOP' ? '🛍️' :
+    type === 'CAFE_RESTAURANT' || type === 'OTHER_PUBLIC' ? '☕' : '📍';
+  
+  const borderColor = 
+    type === 'POLICE' ? '#3b82f6' :
+    type === 'HOSPITAL' ? '#ef4444' :
+    type === 'PHARMACY' ? '#10b981' : '#6366f1';
+
   return `
-    <div style="width:28px;height:28px;border-radius:8px;background:#1e293b;border:2px solid #6366f1;
-      box-shadow:0 2px 8px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;
-      font-size:14px;">${icon}</div>`;
+    <div style="width:30px;height:30px;border-radius:10px;background:#0f172a;border:2px solid ${borderColor};
+      box-shadow:0 3px 10px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;
+      font-size:15px;cursor:pointer;">${icon}</div>`;
 }
 
 // ─── Keyframe injection (once) ────────────────────────────────────────────────
@@ -227,9 +240,20 @@ export function JourneyMap({
     // --- Safety Points ---
     if (hasRoute) {
       safetyPoints.forEach(sp => {
+        const statusBadge = sp.openingStatus === 'OPEN_24_7' ? '<span style="color:#10b981;font-weight:700;">• Open 24/7</span>' :
+          sp.openingStatus === 'OPEN' ? '<span style="color:#10b981;">• Open</span>' :
+          sp.openingStatus === 'CLOSED' ? '<span style="color:#ef4444;">• Closed</span>' : '';
+        
+        const popupContent = `
+          <div style="font-family:sans-serif;font-size:12px;color:#0f172a;line-height:1.4;min-width:140px;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:2px;">${sp.name}</div>
+            <div style="color:#64748b;font-size:11px;text-transform:capitalize;">${sp.category.toLowerCase().replace(/_/g, ' ')} ${statusBadge}</div>
+            ${sp.distanceFromRouteMeters !== undefined ? `<div style="margin-top:4px;color:#475569;font-size:10px;">${sp.distanceFromRouteMeters}m from route</div>` : ''}
+          </div>
+        `;
         const marker = L.marker([sp.latitude, sp.longitude], {
-          icon: L.divIcon({ html: safetyPointHtml(sp.category), className: '', iconSize: [28, 28], iconAnchor: [14, 14] }),
-        }).addTo(map).bindPopup(`<b>${sp.name}</b>`);
+          icon: L.divIcon({ html: safetyPointHtml(sp.category), className: '', iconSize: [30, 30], iconAnchor: [15, 15] }),
+        }).addTo(map).bindPopup(popupContent);
         layers.safetyMarkers.push(marker);
       });
     }

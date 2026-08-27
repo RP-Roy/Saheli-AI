@@ -29,28 +29,51 @@ export const routeService = {
       const osrmUrl = `${OSRM_URL}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?alternatives=3&overview=full&geometries=geojson`;
       const routeRes = await fetch(osrmUrl);
       
-      if (!routeRes.ok) {
-        throw new Error(`Routing API returned ${routeRes.status}`);
+      if (routeRes.ok) {
+        const routeData = await routeRes.json();
+        if (routeData.code === 'Ok' && Array.isArray(routeData.routes) && routeData.routes.length > 0) {
+          return routeData.routes.map((r: any, index: number) => ({
+            id: `osrm-route-${index}`,
+            geometry: r.geometry,
+            distanceMeters: r.distance,
+            durationSeconds: r.duration,
+            source: 'OSRM',
+            isAlternative: index > 0
+          }));
+        }
       }
-
-      const routeData = await routeRes.json();
-      
-      if (routeData.code !== 'Ok' || !routeData.routes || routeData.routes.length === 0) {
-        throw new Error("No routes found between these locations.");
-      }
-
-      return routeData.routes.map((r: any, index: number) => ({
-        id: `osrm-route-${index}`,
-        geometry: r.geometry,
-        distanceMeters: r.distance,
-        durationSeconds: r.duration,
-        source: 'OSRM',
-        isAlternative: index > 0
-      }));
     } catch (error) {
-      console.error('getRouteOptions failed:', error);
-      throw new Error('Failed to fetch routes from routing service');
+      console.warn('OSRM routing fetch failed, generating direct corridor estimate:', error);
     }
+
+    // Fallback: Generate interpolated route corridor if external routing service fails
+    const R = 6371e3;
+    const dLat = ((destination.latitude - origin.latitude) * Math.PI) / 180;
+    const dLon = ((destination.longitude - origin.longitude) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((origin.latitude * Math.PI) / 180) * Math.cos((destination.latitude * Math.PI) / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const distanceMeters = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    const durationSeconds = Math.max(180, Math.round((distanceMeters / 1000) * 120)); // ~30 km/h avg
+
+    const coords: [number, number][] = [];
+    const steps = 6;
+    for (let i = 0; i <= steps; i++) {
+      const frac = i / steps;
+      coords.push([
+        origin.longitude + (destination.longitude - origin.longitude) * frac,
+        origin.latitude + (destination.latitude - origin.latitude) * frac,
+      ]);
+    }
+
+    return [{
+      id: 'fallback-direct-route',
+      geometry: { type: 'LineString', coordinates: coords },
+      distanceMeters,
+      durationSeconds,
+      source: 'DIRECT_ESTIMATE',
+      isAlternative: false,
+    }];
   },
 
   /**

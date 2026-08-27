@@ -27,30 +27,26 @@ export const routeRecommendationService = {
     let recommendedRoute = fastestRoute;
     
     for (const route of routes) {
-      if (!route.routeSafetyResult || !route.coverageSummary) continue;
+      if (!route.routeSafetyResult) continue;
       
       const currentRecScore = recommendedRoute.routeSafetyResult?.score ?? 0;
       const candidateScore = route.routeSafetyResult.score;
       
-      // Rule 4: Never recommend a route solely because it has more nearby businesses.
-      // We require either a meaningfully higher score (e.g. +10) OR specific critical infrastructure advantages
       const scoreDiff = candidateScore - currentRecScore;
-      const hasMeaningfulScoreIncrease = scoreDiff >= 5; // meaningfully better score
       
-      const currentCoverage = recommendedRoute.coverageSummary!;
+      const currentCoverage = recommendedRoute.coverageSummary;
       const candidateCoverage = route.coverageSummary;
       
-      const hasCriticalAdvantage = 
-        (candidateCoverage.policeCount > currentCoverage.policeCount) ||
+      const hasCriticalAdvantage = candidateCoverage && currentCoverage ? 
+        ((candidateCoverage.policeCount > currentCoverage.policeCount) ||
         (candidateCoverage.hospitalCount > currentCoverage.hospitalCount) ||
         (candidateCoverage.openPharmacyCount > currentCoverage.openPharmacyCount) ||
         (candidateCoverage.openHotelCount > currentCoverage.openHotelCount) ||
-        (currentCoverage.maxStretchWithoutPlacesMeters - candidateCoverage.maxStretchWithoutPlacesMeters > 500); // significantly shorter dark stretch
+        (currentCoverage.maxStretchWithoutPlacesMeters - candidateCoverage.maxStretchWithoutPlacesMeters > 500)) : false;
       
       // Accept route if it's safer and within the detour limits
       if (candidateScore > currentRecScore && route.etaMins <= fastestTime * maxDetourRatio) {
-        // Enforce the business rule: if it doesn't have a critical advantage, it needs a much bigger score difference
-        if (hasCriticalAdvantage || scoreDiff >= 10) {
+        if (hasCriticalAdvantage || scoreDiff >= 10 || !currentCoverage) {
           recommendedRoute = route;
         }
       }
@@ -66,12 +62,14 @@ export const routeRecommendationService = {
       
       // Extract specific features for the explanation
       const features: string[] = [];
-      const coverage = recommendedRoute.coverageSummary!;
-      if (coverage.policeCount > 0) features.push(coverage.policeCount > 1 ? 'police stations' : 'a police station');
-      if (coverage.hospitalCount > 0) features.push(coverage.hospitalCount > 1 ? 'hospitals/clinics' : 'a hospital/clinic');
-      if (coverage.openPharmacyCount > 0) features.push('an open pharmacy');
-      if (coverage.openHotelCount > 0) features.push('an open hotel');
-      if (coverage.openFuelCount > 0) features.push('an open fuel station');
+      const coverage = recommendedRoute.coverageSummary;
+      if (coverage) {
+        if (coverage.policeCount > 0) features.push(coverage.policeCount > 1 ? 'police stations' : 'a police station');
+        if (coverage.hospitalCount > 0) features.push(coverage.hospitalCount > 1 ? 'hospitals/clinics' : 'a hospital/clinic');
+        if (coverage.openPharmacyCount > 0) features.push('an open pharmacy');
+        if (coverage.openHotelCount > 0) features.push('an open hotel');
+        if (coverage.openFuelCount > 0) features.push('an open fuel station');
+      }
       
       let featureString = '';
       if (features.length > 0) {
@@ -83,7 +81,7 @@ export const routeRecommendationService = {
           const last = features.pop();
           featureString = `, including ${features.join(', ')}, and ${last}`;
         }
-      } else if (recommendedRoute.coverageSummary!.maxStretchWithoutPlacesMeters < fastestRoute.coverageSummary!.maxStretchWithoutPlacesMeters) {
+      } else if (coverage && fastestRoute.coverageSummary && coverage.maxStretchWithoutPlacesMeters < fastestRoute.coverageSummary.maxStretchWithoutPlacesMeters) {
          featureString = `, with fewer long stretches without safety coverage`;
       }
       
@@ -99,10 +97,10 @@ export const routeRecommendationService = {
       recommendedRoute.type = 'SAFEST';
       recommendedRoute.label = 'Fastest & Safest Route';
       
-      const coverage = recommendedRoute.coverageSummary!;
+      const coverage = recommendedRoute.coverageSummary;
       const features: string[] = [];
-      if (coverage.policeCount > 0) features.push('police');
-      if (coverage.hospitalCount > 0) features.push('hospital');
+      if (coverage && coverage.policeCount > 0) features.push('police');
+      if (coverage && coverage.hospitalCount > 0) features.push('hospital');
       
       const bonus = features.length > 0 ? ` (includes ${features.join(' and ')})` : '';
 

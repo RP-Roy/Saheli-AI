@@ -10,6 +10,7 @@ export interface LearningVideo {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   tags: string[];
   thumbnailUrl: string;
+  sourceUrl: string;
   safetyNote: string;
 }
 
@@ -35,123 +36,142 @@ export const VIDEO_CATEGORIES: VideoCategory[] = [
 export const SELF_DEFENSE_VIDEOS: LearningVideo[] = [
   {
     id: 'v1',
-    title: 'Situational Awareness — Spotting Danger Early',
-    description: 'Learn how to read your environment, spot warning signs, and position yourself safely in public.',
-    youtubeId: 'dQw4w9WgXcQ', // Placeholder
-    category: 'Situational Awareness',
-    duration: '8 min',
+    title: '5 Self-Defense Moves Every Woman Should Know | HER Network',
+    description: 'Practical step-by-step self-defense moves for women when grabbed, pinned, or approached, emphasizing leverage and escape over raw strength.',
+    youtubeId: 'KVpxP3ZZtAc',
+    category: 'Basic Self-Defense',
+    duration: '10 min',
     difficulty: 'Beginner',
-    tags: ['awareness', 'prevention', 'public spaces', 'observation'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1542880941-1971f11a7de6?q=80&w=800&auto=format&fit=crop',
-    safetyNote: 'Always prioritize avoiding confrontation. If you feel unsafe, trust your instincts and leave the area immediately.'
+    tags: ['basic moves', 'strikes', 'leverage', 'women self defense', 'escape'],
+    thumbnailUrl: 'https://i.ytimg.com/vi/KVpxP3ZZtAc/hqdefault.jpg',
+    sourceUrl: 'https://www.youtube.com/watch?v=KVpxP3ZZtAc',
+    safetyNote: 'Always prioritize creating an immediate opening to escape to safety rather than staying in a physical confrontation.'
   },
   {
     id: 'v2',
-    title: 'Palm Strike & Wrist Release — Quick Escapes',
-    description: 'Essential wrist-grab releases and palm strikes anyone can learn in minutes.',
-    youtubeId: 'dQw4w9WgXcQ',
+    title: 'How to Escape a Wrist Hold | Self-Defense',
+    description: 'Essential technique to break out of single and opposite-hand wrist grabs using hip rotation and targeting the attacker\'s weak grip point.',
+    youtubeId: 'sY-P5GBwggU',
     category: 'Escape Techniques',
-    duration: '12 min',
+    duration: '3 min',
     difficulty: 'Beginner',
-    tags: ['escape', 'strike', 'hands-on', 'wrist grab'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=800&auto=format&fit=crop',
-    safetyNote: 'These techniques are for creating an opportunity to run. Do not attempt to stay and fight.'
+    tags: ['wrist grab', 'release', 'escape', 'grip break', 'technique'],
+    thumbnailUrl: 'https://i.ytimg.com/vi/sY-P5GBwggU/hqdefault.jpg',
+    sourceUrl: 'https://www.youtube.com/watch?v=sY-P5GBwggU',
+    safetyNote: 'Use your entire body momentum and core rotation rather than relying purely on arm strength.'
   },
   {
     id: 'v3',
-    title: 'De-escalation: How to Talk Your Way to Safety',
-    description: 'Verbal strategies and body language to diffuse confrontations before they become physical.',
-    youtubeId: 'dQw4w9WgXcQ',
-    category: 'De-escalation',
-    duration: '10 min',
+    title: 'Situational Intelligence: The Hidden Skill That Will Transform Your Life',
+    description: 'Former Federal Air Marshal Ashley Glinka breaks down how to read environments, detect danger early, and establish situational awareness in public spaces.',
+    youtubeId: '1UwJ02VaL2s',
+    category: 'Situational Awareness',
+    duration: '14 min',
     difficulty: 'Beginner',
-    tags: ['verbal', 'communication', 'conflict', 'psychology'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1573497491208-6f16bfc4ac22?q=80&w=800&auto=format&fit=crop',
-    safetyNote: 'Maintain a safe distance (at least two arms lengths) while attempting to de-escalate.'
+    tags: ['awareness', 'prevention', 'observation', 'tedx', 'mindset'],
+    thumbnailUrl: 'https://i.ytimg.com/vi/1UwJ02VaL2s/hqdefault.jpg',
+    sourceUrl: 'https://www.youtube.com/watch?v=1UwJ02VaL2s',
+    safetyNote: 'Trust your intuition immediately. If someone or an area feels suspicious, change direction and seek a populated safe haven.'
   },
   {
     id: 'v4',
-    title: 'Public Transport Safety: Cabs and Buses',
-    description: 'Crucial checks before getting into a rideshare, and how to position yourself safely on public transit.',
-    youtubeId: 'dQw4w9WgXcQ',
+    title: 'Rideshare Safety Tips: How to Stay Safe Using Uber & Lyft',
+    description: 'Crucial verification habits before entering rideshares, including checking license plates, confirming driver identity, and sitting in the back seat.',
+    youtubeId: 'Vp1AUPAp9oo',
     category: 'Public Transport Safety',
-    duration: '15 min',
-    difficulty: 'Intermediate',
-    tags: ['uber', 'taxi', 'bus', 'train', 'commute'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1533596665452-f192b952fa8b?q=80&w=800&auto=format&fit=crop',
-    safetyNote: 'Always share your ride details with a trusted contact before getting into any vehicle.'
+    duration: '4 min',
+    difficulty: 'Beginner',
+    tags: ['uber', 'lyft', 'rideshare', 'taxi', 'commute', 'transit'],
+    thumbnailUrl: 'https://i.ytimg.com/vi/Vp1AUPAp9oo/hqdefault.jpg',
+    sourceUrl: 'https://www.youtube.com/watch?v=Vp1AUPAp9oo',
+    safetyNote: 'Always ask "Who are you picking up?" and verify license plates before unlocking or entering the vehicle.'
   },
   {
     id: 'v5',
-    title: 'Night Safety: Navigating Unlit Areas',
-    description: 'Practical street-smart tactics for navigating poorly lit areas, parking lots, and walking home at night.',
-    youtubeId: 'dQw4w9WgXcQ',
+    title: 'How Women Walk Alone Safely At Night',
+    description: 'Tactical advice for night travel: choosing illuminated paths, active body language, managing headphones, and what to do if you suspect you are being followed.',
+    youtubeId: 's2yGExEQl5Y',
     category: 'Night Safety',
-    duration: '9 min',
+    duration: '6 min',
     difficulty: 'Beginner',
-    tags: ['night', 'walking', 'parking lot', 'dark'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1509115713430-b384ff74bb4d?q=80&w=800&auto=format&fit=crop',
-    safetyNote: 'Keep your hands free (unplug headphones, put phone away) to stay fully aware of your surroundings.'
+    tags: ['night', 'walking alone', 'dark streets', 'body language', 'safety'],
+    thumbnailUrl: 'https://i.ytimg.com/vi/s2yGExEQl5Y/hqdefault.jpg',
+    sourceUrl: 'https://www.youtube.com/watch?v=s2yGExEQl5Y',
+    safetyNote: 'Keep your hands free and stay alert. Avoid walking with noise-canceling headphones in isolated or poorly lit areas.'
   },
   {
     id: 'v6',
-    title: 'Ground Defense: What to Do if You Fall',
-    description: 'Key defensive postures, how to protect your head, and escape moves if you are taken to the ground.',
-    youtubeId: 'dQw4w9WgXcQ',
-    category: 'Basic Self-Defense',
-    duration: '14 min',
-    difficulty: 'Advanced',
-    tags: ['ground', 'defense', 'fall', 'advanced'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=800&auto=format&fit=crop',
-    safetyNote: 'Practicing ground maneuvers should only be done on soft surfaces in a controlled environment.'
+    title: 'CPI De-escalation Basics Training',
+    description: 'Proven non-violent communication and verbal de-escalation models from the Crisis Prevention Institute to defuse hostility and prevent conflict.',
+    youtubeId: '7uKGNWEkxvc',
+    category: 'De-escalation',
+    duration: '5 min',
+    difficulty: 'Intermediate',
+    tags: ['de-escalation', 'verbal', 'conflict resolution', 'calm', 'communication'],
+    thumbnailUrl: 'https://i.ytimg.com/vi/7uKGNWEkxvc/hqdefault.jpg',
+    sourceUrl: 'https://www.youtube.com/watch?v=7uKGNWEkxvc',
+    safetyNote: 'Maintain a safe distance of at least two arm lengths and avoid cornering or escalating voice volume.'
   },
   {
     id: 'v7',
-    title: 'Emergency Response & SOS Handling',
-    description: 'How to effectively use your phone\'s SOS features and what exactly to say when calling emergency services.',
-    youtubeId: 'dQw4w9WgXcQ',
+    title: 'How to do Compression-Only CPR & Emergency Response',
+    description: 'American Red Cross official tutorial on immediate crisis intervention, dialing emergency services, and performing compression-only CPR.',
+    youtubeId: 'VZqG-tcZvfE',
     category: 'Emergency Response',
-    duration: '11 min',
+    duration: '3 min',
     difficulty: 'Beginner',
-    tags: ['sos', 'police', 'calling 911', 'emergency'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1584988775618-9366e4a6015b?q=80&w=800&auto=format&fit=crop',
-    safetyNote: 'When calling for help, always state your exact location first, before explaining the emergency.'
+    tags: ['emergency', 'cpr', 'calling 911', 'first aid', 'crisis'],
+    thumbnailUrl: 'https://i.ytimg.com/vi/VZqG-tcZvfE/hqdefault.jpg',
+    sourceUrl: 'https://www.youtube.com/watch?v=VZqG-tcZvfE',
+    safetyNote: 'In any emergency, always call emergency services first and state your location before taking further action.'
   }
 ];
 
-/**
- * Returns a list of recommended videos from the local catalogue based on a given topic/query.
- * @param topic The search term or topic (e.g. 'rideshare', 'night', 'escape')
- */
 export function getRecommendedResources(topic: string): LearningVideo[] {
-  const query = topic.toLowerCase();
+  const query = topic.toLowerCase().trim();
   
   if (!query) {
     // Default to beginner fundamentals if no specific topic
     return SELF_DEFENSE_VIDEOS.filter(v => v.difficulty === 'Beginner').slice(0, 3);
   }
 
+  const tokens = query.split(/\s+/).filter(t => t.length > 2);
+
   // Score matches to rank them
   const scored = SELF_DEFENSE_VIDEOS.map(video => {
     let score = 0;
     
     // Direct match in tags (highest weight)
-    if (video.tags.some(tag => tag.toLowerCase().includes(query) || query.includes(tag.toLowerCase()))) {
-      score += 10;
+    for (const tag of video.tags) {
+      const lowerTag = tag.toLowerCase();
+      if (lowerTag === query || query.includes(lowerTag)) {
+        score += 20;
+      } else if (tokens.some(t => lowerTag.includes(t))) {
+        score += 10;
+      }
     }
     
     // Direct match in category
-    if (video.category.toLowerCase().includes(query) || query.includes(video.category.toLowerCase())) {
+    const lowerCategory = video.category.toLowerCase();
+    if (lowerCategory === query || query.includes(lowerCategory)) {
+      score += 15;
+    } else if (tokens.some(t => lowerCategory.includes(t))) {
       score += 8;
     }
     
     // Match in title
-    if (video.title.toLowerCase().includes(query)) {
-      score += 5;
+    const lowerTitle = video.title.toLowerCase();
+    if (lowerTitle.includes(query)) {
+      score += 12;
+    } else if (tokens.some(t => lowerTitle.includes(t))) {
+      score += 6;
     }
     
     // Match in description
-    if (video.description.toLowerCase().includes(query)) {
+    const lowerDesc = video.description.toLowerCase();
+    if (lowerDesc.includes(query)) {
+      score += 5;
+    } else if (tokens.some(t => lowerDesc.includes(t))) {
       score += 2;
     }
     
@@ -165,5 +185,5 @@ export function getRecommendedResources(topic: string): LearningVideo[] {
     .map(item => item.video)
     .slice(0, 3);
     
-  return results.length > 0 ? results : getRecommendedResources(''); // fallback if no match
+  return results;
 }

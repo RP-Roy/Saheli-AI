@@ -15,7 +15,7 @@ describe('Route Safety Engine', () => {
   };
 
   it('starts with a baseline score of 50', () => {
-    const result = routeSafetyEngine.calculateRouteSafety(baseCoverage, { detourRatio: 1.0 });
+    const result = routeSafetyEngine.calculateRouteSafety(baseCoverage, [], { detourRatio: 1.0 });
     expect(result.score).toBe(50);
     expect(result.level).toBe('LIMITED_SAFETY_COVERAGE');
     expect(result.strengths.length).toBe(0);
@@ -25,7 +25,7 @@ describe('Route Safety Engine', () => {
     const result = routeSafetyEngine.calculateRouteSafety({
       ...baseCoverage,
       policeCount: 2
-    }, { detourRatio: 1.0 });
+    }, [], { detourRatio: 1.0 });
     expect(result.score).toBe(70);
     expect(result.strengths).toContain("Strong police coverage nearby");
   });
@@ -34,7 +34,7 @@ describe('Route Safety Engine', () => {
     const result = routeSafetyEngine.calculateRouteSafety({
       ...baseCoverage,
       policeCount: 1
-    }, { detourRatio: 1.0 });
+    }, [], { detourRatio: 1.0 });
     expect(result.score).toBe(60);
     expect(result.strengths).toContain("Police station nearby");
   });
@@ -43,7 +43,7 @@ describe('Route Safety Engine', () => {
     const result = routeSafetyEngine.calculateRouteSafety({
       ...baseCoverage,
       publicPlaceCount: 3
-    }, { detourRatio: 1.0 });
+    }, [], { detourRatio: 1.0 });
     expect(result.score).toBe(65);
     expect(result.strengths).toContain("Multiple open public places");
   });
@@ -57,7 +57,7 @@ describe('Route Safety Engine', () => {
       openPharmacyCount: 1, // +5 (100)
       openFuelCount: 1, // +5 (would be 105)
       openHotelCount: 1 // +5 (would be 110)
-    }, { detourRatio: 1.0 });
+    }, [], { detourRatio: 1.0 });
     expect(result.score).toBe(100);
     expect(result.level).toBe('HIGHER_SAFETY_COVERAGE');
   });
@@ -66,13 +66,13 @@ describe('Route Safety Engine', () => {
     const result = routeSafetyEngine.calculateRouteSafety({
       ...baseCoverage,
       maxStretchWithoutPlacesMeters: 4500
-    }, { detourRatio: 1.0 });
+    }, [], { detourRatio: 1.0 });
     expect(result.score).toBe(35); // 50 - 15
     expect(result.weaknesses).toContain("Very long segment with limited safety coverage");
   });
 
   it('penalizes for detour ratios > 1.3', () => {
-    const result = routeSafetyEngine.calculateRouteSafety(baseCoverage, { detourRatio: 1.4 });
+    const result = routeSafetyEngine.calculateRouteSafety(baseCoverage, [], { detourRatio: 1.4 });
     expect(result.score).toBe(40); // 50 - 10
     expect(result.weaknesses).toContain("Excessive route detour");
   });
@@ -81,7 +81,7 @@ describe('Route Safety Engine', () => {
     const result = routeSafetyEngine.calculateRouteSafety({
       ...baseCoverage,
       maxStretchWithoutPlacesMeters: 5000 // -15
-    }, { detourRatio: 1.6 }); // -10 -> 25. Let's force it below zero if we add more penalties. (Right now max penalties are -25 so it goes to 25. Let's just test that logic is clamped).
+    }, [], { detourRatio: 1.6 }); // -10 -> 25. Let's force it below zero if we add more penalties. (Right now max penalties are -25 so it goes to 25. Let's just test that logic is clamped).
     expect(result.score).toBe(25);
   });
 });

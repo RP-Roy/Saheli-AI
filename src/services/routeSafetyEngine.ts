@@ -7,8 +7,8 @@ export interface RouteSafetyContext {
 export const routeSafetyEngine = {
   calculateRouteSafety(
     coverageSummary: RouteCoverageSummary & { _demoOverrideScore?: number, _demoStrengths?: string[], _demoWeaknesses?: string[], _demoReasons?: string[] },
-    safetyPlaces: SafetyPlace[],
-    context: RouteSafetyContext
+    safetyPlaces: SafetyPlace[] = [],
+    context: RouteSafetyContext = { detourRatio: 1.0 }
   ): RouteSafetyResult {
     if (coverageSummary._demoOverrideScore !== undefined) {
       const score = coverageSummary._demoOverrideScore;
@@ -38,64 +38,66 @@ export const routeSafetyEngine = {
 
     // -- POSITIVE SIGNALS --
     
-    const minPoliceDist = getMinDistance(p => p.category === 'POLICE');
-    if (minPoliceDist !== null) {
+    if (coverageSummary.policeCount > 0) {
+      const minPoliceDist = getMinDistance(p => p.category === 'POLICE');
+      const distStr = minPoliceDist !== null ? ` (closest is ${minPoliceDist}m)` : '';
       if (coverageSummary.policeCount >= 2) {
         score += 20;
-        strengths.push(`Multiple police stations nearby (closest is ${minPoliceDist}m)`);
+        strengths.push(`Strong police coverage nearby${distStr}`);
       } else {
         score += 10;
-        strengths.push(`Police station within ${minPoliceDist}m of route`);
+        strengths.push(`Police station nearby${distStr}`);
       }
     }
     
-    const validPublicPlaces = safetyPlaces.filter(p => ['SHOP', 'CAFE_RESTAURANT', 'OTHER_PUBLIC'].includes(p.category));
-    if (validPublicPlaces.length >= 3) {
-      score += 15;
-      strengths.push(`High density of safety-supporting public places (${validPublicPlaces.length})`);
-    } else if (validPublicPlaces.length > 0) {
-      score += 8;
-      strengths.push(`Some public places mapped along route (${validPublicPlaces.length})`);
+    if (coverageSummary.publicPlaceCount > 0) {
+      if (coverageSummary.publicPlaceCount >= 3) {
+        score += 15;
+        strengths.push("Multiple open public places");
+      } else {
+        score += 8;
+        strengths.push("Some public places mapped along route");
+      }
     }
     
-    const minHospitalDist = getMinDistance(p => p.category === 'HOSPITAL');
-    if (minHospitalDist !== null) {
+    if (coverageSummary.hospitalCount > 0) {
+      const minHospitalDist = getMinDistance(p => p.category === 'HOSPITAL');
       score += 10;
-      strengths.push(`Hospital/clinic within ${minHospitalDist}m`);
+      strengths.push(`Hospital/clinic nearby${minHospitalDist !== null ? ` (${minHospitalDist}m)` : ''}`);
     }
     
-    const minPharmacyDist = getMinDistance(p => p.category === 'PHARMACY' && (p.openingStatus === 'OPEN' || p.openingStatus === 'OPEN_24_7'));
-    if (minPharmacyDist !== null) {
+    if (coverageSummary.openPharmacyCount > 0) {
+      const minPharmacyDist = getMinDistance(p => p.category === 'PHARMACY' && (p.openingStatus === 'OPEN' || p.openingStatus === 'OPEN_24_7'));
       score += 5;
-      strengths.push(`Open pharmacy within ${minPharmacyDist}m`);
+      strengths.push(`Open pharmacy nearby${minPharmacyDist !== null ? ` (${minPharmacyDist}m)` : ''}`);
     }
     
-    const minFuelDist = getMinDistance(p => p.category === 'FUEL' && (p.openingStatus === 'OPEN' || p.openingStatus === 'OPEN_24_7'));
-    if (minFuelDist !== null) {
+    if (coverageSummary.openFuelCount > 0) {
+      const minFuelDist = getMinDistance(p => p.category === 'FUEL' && (p.openingStatus === 'OPEN' || p.openingStatus === 'OPEN_24_7'));
       score += 5;
-      strengths.push(`Open fuel station within ${minFuelDist}m`);
+      strengths.push(`Open fuel station nearby${minFuelDist !== null ? ` (${minFuelDist}m)` : ''}`);
     }
     
-    const minHotelDist = getMinDistance(p => p.category === 'HOTEL' && (p.openingStatus === 'OPEN' || p.openingStatus === 'OPEN_24_7'));
-    if (minHotelDist !== null) {
+    if (coverageSummary.openHotelCount > 0) {
+      const minHotelDist = getMinDistance(p => p.category === 'HOTEL' && (p.openingStatus === 'OPEN' || p.openingStatus === 'OPEN_24_7'));
       score += 5;
-      strengths.push(`Open hotel within ${minHotelDist}m`);
+      strengths.push(`Open hotel nearby${minHotelDist !== null ? ` (${minHotelDist}m)` : ''}`);
     }
     
     // -- NEGATIVE SIGNALS --
     
     if (coverageSummary.maxStretchWithoutPlacesMeters > 4000) {
       score -= 15;
-      weaknesses.push(`Very long segment (${(coverageSummary.maxStretchWithoutPlacesMeters/1000).toFixed(1)}km) with limited mapped safety-supporting places`);
+      weaknesses.push("Very long segment with limited safety coverage");
     } else if (coverageSummary.maxStretchWithoutPlacesMeters > 2000) {
       score -= 10;
-      weaknesses.push(`Longer segment (${(coverageSummary.maxStretchWithoutPlacesMeters/1000).toFixed(1)}km) with limited mapped safety-supporting places`);
+      weaknesses.push("Longer segment with limited safety coverage");
     }
     
     // Detour penalty
     if (context.detourRatio > 1.3) {
       score -= 10;
-      weaknesses.push(`Excessive route detour (approx ${Math.round((context.detourRatio - 1) * 100)}% longer)`);
+      weaknesses.push("Excessive route detour");
     }
     
     // Ensure 0-100 bounds

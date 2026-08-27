@@ -3,9 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// A helper to quickly determine if we have credentials to talk to a real backend
+// A helper to quickly determine if we have real credentials to talk to a remote backend
 export const isSupabaseConfigured = () => {
-  return supabaseUrl !== '' && supabaseAnonKey !== '';
+  return (
+    supabaseUrl !== '' &&
+    !supabaseUrl.includes('your-project.supabase.co') &&
+    supabaseAnonKey !== '' &&
+    !supabaseAnonKey.includes('your-anon-key')
+  );
 };
 
 // We create the client anyway, but it won't be successfully used unless configured.

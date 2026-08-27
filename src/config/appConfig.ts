@@ -26,7 +26,8 @@ export const APP_CONFIG = {
   supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? '',
 
   // Gemini (via Supabase Edge Function)
-  geminiEdgeFunctionUrl: '/functions/v1/gemini-chat',
+  geminiEdgeFunctionUrl: '/functions/v1/saheli-chat',
+  saheliEdgeFunctionUrl: '/functions/v1/saheli-chat',
 } as const;
 
 export type RiskLevel = 'SAFE' | 'CAUTION' | 'HIGH_RISK';

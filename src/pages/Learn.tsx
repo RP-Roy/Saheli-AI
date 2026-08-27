@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { BookOpen, Play, Search, Clock, X, ExternalLink, ShieldAlert, CheckCircle2, MessageSquareText } from 'lucide-react';
+import { BookOpen, Play, Search, Clock, X, ExternalLink, ShieldAlert, CheckCircle2, MessageSquareText, AlertCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -28,6 +28,16 @@ export default function Learn() {
   const [selectedVideo, setSelectedVideo] = useState<typeof SELF_DEFENSE_VIDEOS[0] | null>(null);
   
   const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [embedError, setEmbedError] = useState(false);
+
+  // Reset video player states when a new video is selected
+  useEffect(() => {
+    if (selectedVideo) {
+      setIsVideoLoading(true);
+      setEmbedError(false);
+    }
+  }, [selectedVideo]);
 
   // Load progress
   useEffect(() => {
@@ -219,27 +229,74 @@ export default function Learn() {
           <div className="bg-surface-800 border border-white/10 rounded-3xl shadow-glass w-full max-w-2xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
             
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/5">
-              <h3 className="font-bold text-white truncate pr-4">{selectedVideo.title}</h3>
-              <button
-                onClick={() => setSelectedVideo(null)}
-                className="flex-shrink-0 w-8 h-8 rounded-xl bg-surface-700 hover:bg-surface-600 flex items-center justify-center text-slate-400 hover:text-white transition-all"
-              >
-                <X className="w-4 h-4" />
-              </button>
+            <div className="flex items-center justify-between p-4 border-b border-white/5 gap-2">
+              <h3 className="font-bold text-white truncate flex-1 text-sm sm:text-base">{selectedVideo.title}</h3>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <a
+                  href={selectedVideo.sourceUrl || `https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-xl bg-surface-700 hover:bg-surface-600 flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-all font-medium"
+                  title="Open on YouTube"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-red-400" />
+                  <span className="hidden sm:inline">YouTube</span>
+                </a>
+                <button
+                  onClick={() => setSelectedVideo(null)}
+                  className="w-8 h-8 rounded-xl bg-surface-700 hover:bg-surface-600 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+                  aria-label="Close video player"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="overflow-y-auto">
               {/* Embed Area */}
-              <div className="relative aspect-video bg-black">
-                <iframe 
-                  className="w-full h-full"
-                  src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?rel=0`} 
-                  title={selectedVideo.title}
-                  frameBorder="0" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                ></iframe>
+              <div className="relative aspect-video bg-black overflow-hidden flex items-center justify-center">
+                {/* Loading state */}
+                {isVideoLoading && !embedError && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-surface-900/90 text-slate-400 gap-2">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary-400" />
+                    <span className="text-xs font-medium">Loading video...</span>
+                  </div>
+                )}
+
+                {/* Embed error fallback */}
+                {embedError ? (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center bg-surface-900/95 gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                      <AlertCircle className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">Video unavailable</p>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm">This video cannot be played directly here or embedding is restricted.</p>
+                    </div>
+                    <a
+                      href={selectedVideo.sourceUrl || `https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold shadow-lg transition-colors mt-1"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Open on YouTube
+                    </a>
+                  </div>
+                ) : (
+                  <iframe
+                    className="w-full h-full"
+                    src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?rel=0&enablejsapi=1`}
+                    title={selectedVideo.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    onLoad={() => setIsVideoLoading(false)}
+                    onError={() => {
+                      setIsVideoLoading(false);
+                      setEmbedError(true);
+                    }}
+                  />
+                )}
               </div>
 
               {/* Content */}
@@ -269,26 +326,35 @@ export default function Learn() {
                 </div>
 
                 {/* Actions */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+                  <a
+                    href={selectedVideo.sourceUrl || `https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-surface-700/80 hover:bg-surface-600 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white transition-all"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-red-400" /> Open on YouTube
+                  </a>
+
                   <Button
                     variant="secondary"
                     onClick={() => handleAskSaheli(selectedVideo.title)}
-                    className="flex items-center justify-center gap-2"
+                    className="flex items-center justify-center gap-2 text-xs"
                   >
-                    <MessageSquareText className="w-4 h-4" /> Ask Saheli
+                    <MessageSquareText className="w-3.5 h-3.5" /> Ask Saheli
                   </Button>
                   
                   {watchedIds.has(selectedVideo.id) ? (
-                    <Button variant="safe" className="cursor-default flex items-center justify-center gap-2">
-                      <CheckCircle2 className="w-4 h-4" /> Completed
+                    <Button variant="safe" className="cursor-default flex items-center justify-center gap-2 text-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Completed
                     </Button>
                   ) : (
                     <Button
                       variant="primary"
                       onClick={() => handleMarkWatched(selectedVideo.id)}
-                      className="flex items-center justify-center gap-2"
+                      className="flex items-center justify-center gap-2 text-xs"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Mark as Watched
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Mark as Watched
                     </Button>
                   )}
                 </div>
@@ -320,12 +386,15 @@ function VideoCard({ video, featured = false, isWatched = false, onClick }: {
       )}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-surface-700 overflow-hidden">
+      <div className="relative aspect-video bg-surface-700 overflow-hidden flex items-center justify-center">
         <img
           src={video.thumbnailUrl}
           alt={video.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={e => { (e.currentTarget as HTMLImageElement).src = `https://picsum.photos/seed/${video.id}/400/225`; }}
+          onError={e => {
+            // Hide image and show background icon placeholder
+            (e.currentTarget as HTMLImageElement).style.display = 'none';
+          }}
         />
         <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">

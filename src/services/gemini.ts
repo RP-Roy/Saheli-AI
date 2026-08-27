@@ -1,8 +1,9 @@
 import { APP_CONFIG } from '../config/appConfig';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
-// ─── Gemini Chat Service ──────────────────────────────────────────────────────
-// Calls the Supabase Edge Function which proxies to Google Gemini.
-// Falls back to a static demo response when edge function is unavailable.
+// ─── Saheli Gemini Chat Service ───────────────────────────────────────────────
+// Calls the Supabase Edge Function `saheli-chat` (Server-Side Gemini API call).
+// Never exposes GEMINI_API_KEY on the client.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ChatMessage {
@@ -12,56 +13,163 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+export interface SaheliChatRequest {
+  message: string;
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  journeyContext?: {
+    isActive?: boolean;
+    origin?: string;
+    destination?: string;
+    etaMins?: number;
+    routeSafetyScore?: number;
+    riskLevel?: string;
+    deviationDetected?: boolean;
+    safetyPoints?: Array<{ name: string; type?: string; category?: string; distanceMeters?: number }>;
+  };
+  routeContext?: {
+    originLabel?: string;
+    destinationLabel?: string;
+    score?: number;
+    level?: string;
+    reasons?: string[];
+    strengths?: string[];
+    weaknesses?: string[];
+    nearbyPlaces?: Array<{ name: string; type: string; distanceMeters?: number }>;
+    maxStretchWithoutPlacesMeters?: number;
+    detourRatio?: number;
+  };
+  relevantResources?: Array<{
+    id: string;
+    title: string;
+    category: string;
+    description?: string;
+    duration?: string;
+  }>;
+}
+
+// Legacy format adapter
 export interface GeminiChatRequest {
   messages: ChatMessage[];
   systemPrompt?: string;
   contextData?: Record<string, unknown>;
+  routeContext?: SaheliChatRequest['routeContext'];
+  relevantResources?: SaheliChatRequest['relevantResources'];
 }
 
-// Demo fallback responses
-const DEMO_RESPONSES = [
-  "I'm Saheli, your safety companion. I'm here to help you stay safe during your journey. Your current journey confidence score is high — everything looks good! 🟢",
-  "I notice you're asking about your journey status. Based on your current route and position, everything is within normal parameters. Keep going safely!",
-  "For self-defence resources, I recommend checking the **Learn** section — we have curated videos on situational awareness, de-escalation, and physical techniques.",
-  "Your trusted contacts are ready. Priya, Arjun, and Sneha will be notified immediately if a safety incident is detected.",
-  "The safest approach is always to trust your instincts. If something feels wrong, you can trigger a manual check-in or share your location directly from the Journey screen.",
-];
+/**
+ * Sends a message to the Saheli Gemini AI companion via Supabase Edge Function `saheli-chat`.
+ */
+export async function sendSaheliChat(request: SaheliChatRequest): Promise<string> {
+  const payload = {
+    message: request.message,
+    conversationHistory: request.conversationHistory || [],
+    journeyContext: request.journeyContext,
+    routeContext: request.routeContext,
+    relevantResources: request.relevantResources || [],
+  };
 
-let demoResponseIndex = 0;
+  // 1. Try invoking through the official Supabase SDK if configured
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase.functions.invoke('saheli-chat', {
+        body: payload,
+      });
 
-export async function sendChatMessage(request: GeminiChatRequest): Promise<string> {
-  // Try the Edge Function first
+      if (!error && data?.reply) {
+        return data.reply;
+      }
+      if (error) {
+        console.warn('Supabase edge function invoke returned error:', error);
+      }
+    } catch (invokeErr) {
+      console.warn('Error invoking Supabase saheli-chat function via SDK:', invokeErr);
+    }
+  }
+
+  // 2. Direct fetch attempt to the Edge Function endpoint
   try {
-    const response = await fetch(APP_CONFIG.geminiEdgeFunctionUrl, {
+    const supabaseUrl = APP_CONFIG.supabaseUrl;
+    const anonKey = APP_CONFIG.supabaseAnonKey;
+    const edgeEndpoint = supabaseUrl 
+      ? `${supabaseUrl}/functions/v1/saheli-chat` 
+      : APP_CONFIG.saheliEdgeFunctionUrl;
+
+    const response = await fetch(edgeEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
+      headers: {
+        'Content-Type': 'application/json',
+        ...(anonKey ? { 'Authorization': `Bearer ${anonKey}`, 'apikey': anonKey } : {}),
+      },
+      body: JSON.stringify(payload),
     });
 
     if (response.ok) {
       const data = await response.json();
-      return data.reply as string;
+      if (data?.reply) {
+        return data.reply;
+      }
+    } else {
+      const errData = await response.json().catch(() => null);
+      if (errData?.reply) {
+        return errData.reply;
+      }
     }
-  } catch {
-    // Fall through to demo mode
+  } catch (fetchErr) {
+    console.warn('Direct fetch to saheli-chat edge function failed:', fetchErr);
   }
 
-  // Demo fallback: rotate through canned responses
-  await new Promise(r => setTimeout(r, 1000 + Math.random() * 500)); // fake latency
-  const reply = DEMO_RESPONSES[demoResponseIndex % DEMO_RESPONSES.length];
-  demoResponseIndex++;
-  return reply;
+  // 3. Context-aware fallback response if Edge Function / Gemini API is unreachable
+  return getContextualFallback(request);
 }
 
-// System prompt for Saheli companion
+/**
+ * Backwards compatibility adapter for legacy callers
+ */
+export async function sendChatMessage(request: GeminiChatRequest): Promise<string> {
+  const lastUserMessage = [...request.messages].reverse().find(m => m.role === 'user')?.content || '';
+  const history = request.messages
+    .filter(m => m.content !== lastUserMessage)
+    .map(m => ({ role: m.role, content: m.content }));
+
+  return sendSaheliChat({
+    message: lastUserMessage,
+    conversationHistory: history,
+    journeyContext: request.contextData as any,
+    routeContext: request.routeContext,
+    relevantResources: request.relevantResources,
+  });
+}
+
+function getContextualFallback(request: SaheliChatRequest): string {
+  const msg = request.message.toLowerCase();
+
+  if (/help|emergency|danger|unsafe|scared|followed|threat/i.test(msg)) {
+    return "🚨 **If you feel in immediate danger, please use the Emergency SOS button right away or contact local emergency services (112 / 911).** Stay in populated, well-lit areas and share your live location with your trusted contacts.";
+  }
+
+  if (/route|score|why|recommend/i.test(msg)) {
+    const score = request.journeyContext?.routeSafetyScore ?? request.routeContext?.score;
+    if (score !== undefined) {
+      return `Saheli evaluated your route with a **Route Safety Score of ${score}/100**. This score reflects verified lighting conditions, safe-haven access (such as open pharmacies and police stations), and lower historical risk factors along the corridor.`;
+    }
+    return "Saheli recommends routes based on multi-factor predictive safety analysis—including verified safe havens, active street lighting, and crowd density along the path.";
+  }
+
+  if (/learn|video|defense|technique/i.test(msg)) {
+    return "You can explore practical self-defense techniques in the **Learn** tab, featuring verified guides on situational awareness, wrist-grab escapes, de-escalation, and night travel safety.";
+  }
+
+  return "I'm Saheli, your safety companion. I'm monitoring your commute to ensure you have proactive guidance and quick access to emergency tools whenever you need them.";
+}
+
 export const SAHELI_SYSTEM_PROMPT = `
-You are Saheli, a warm, calm, and trustworthy AI safety companion for women.
-Your primary roles:
-1. Explain the user's current journey safety status and route recommendations in simple, reassuring language.
-2. Recommend relevant self-defence and safety learning resources when appropriate.
-3. Guide users through emergency procedures calmly.
-4. NEVER calculate safety scores or override the deterministic risk engine. The provided Route Safety Score is the source of truth.
-5. NEVER claim a road is "dangerous". Use precise wording like "This route has more limited safety-supporting coverage."
-6. Be concise, empathetic, and action-oriented.
-7. Respond in English unless the user writes in another language.
+You are Saheli, a calm and practical personal safety companion.
+Your responsibilities:
+- provide practical safety guidance
+- prioritize avoiding confrontation
+- prioritize moving toward public or safer locations
+- explain Saheli's route recommendations and Route Safety Scores
+- recommend relevant self-defense resources
+- explain journey status
+- guide users toward the Emergency feature when appropriate
 `.trim();

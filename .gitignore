@@ -35,9 +35,18 @@ dist-ssr
 .vite/
 /build
 
+
 # Testing
 /coverage
 
 # Supabase Local
 supabase/.temp/
 supabase/.branches/
+supabase/functions/.env
+supabase/functions/.env.local
+
+# Agents & Tooling
+.agent
+.agents
+.gemini
+.impeccable
