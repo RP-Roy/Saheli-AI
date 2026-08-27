@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Play, Square, MapPin, Clock, ChevronRight,
-  AlertTriangle, CheckCircle, Radio, Zap, Target, ShieldCheck, Route, Search, Loader2, BookOpen
+  AlertTriangle, CheckCircle, Radio, Target, ShieldCheck, Route, Search, Loader2, BookOpen
 } from 'lucide-react';
 import { useDemo } from '../context/DemoContext';
 import { Button } from '../components/ui/Button';
@@ -10,7 +10,6 @@ import { RiskBadge } from '../components/ui/Badge';
 import { RouteSafetyScore } from '../components/ui/RouteSafetyScore';
 import { Modal } from '../components/ui/Spinner';
 import { JourneyMap } from '../components/ui/JourneyMap';
-import { DEMO_SCENARIOS } from '../config/demoConfig';
 import { RECENT_EVENTS, DEMO_ROUTE_OPTIONS } from '../data/mockData';
 import { getRecommendedResources } from '../data/selfDefenseVideos';
 import { formatTime, cn } from '../utils/formatters';
@@ -25,8 +24,8 @@ import { journeyService } from '../services/journeyService';
 
 export default function Journey() {
   const {
-    journey, isDemoMode, startJourney, endJourney, setJourney,
-    setScenario, activeScenario, acknowledgeSafetyCheck, updateRiskLevel, setDeviation,
+    journey, startJourney, endJourney, setJourney,
+    acknowledgeSafetyCheck, updateRiskLevel, setDeviation,
     addIncident, updateActiveRoute
   } = useDemo();
 
@@ -37,8 +36,6 @@ export default function Journey() {
   const [localPhase, setLocalPhase] = useState<Phase>('PLANNING');
   const phase: Phase = journey.isActive ? 'MONITORING' : localPhase;
 
-  const [origin, setOrigin] = useState('College');
-  const [dest, setDest] = useState('Home');
   const [routeError, setRouteError] = useState<string | null>(null);
 
   const loc = useGeolocation();
@@ -59,19 +56,15 @@ export default function Journey() {
 
   const handleGenerateRoutes = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isDemoMode) {
-      if (!origin || !dest) return;
-    } else {
-      if (!loc.latitude || !loc.longitude || !realDest) return;
-    }
+    if (!loc.latitude || !loc.longitude || !realDest) return;
     
     setIsLoading(true);
     setRouteError(null);
     try {
-      const originParam = isDemoMode ? origin : { latitude: loc.latitude!, longitude: loc.longitude! };
-      const destParam = isDemoMode ? dest : { latitude: realDest!.lat, longitude: realDest!.lon };
+      const originParam = { latitude: loc.latitude, longitude: loc.longitude };
+      const destParam = { latitude: realDest.lat, longitude: realDest.lon };
 
-      const routes = await routeService.generateSafeRoutes(originParam, destParam, isDemoMode);
+      const routes = await routeService.generateSafeRoutes(originParam, destParam, false);
       setGeneratedRoutes(routes);
       if (routes.length > 0) {
         setSelectedRouteId(routes[0].id);
@@ -86,8 +79,8 @@ export default function Journey() {
   };
 
   const handleStartJourney = () => {
-    const originLabel = isDemoMode ? origin : (loc.latitude ? 'Current Location' : 'Start Point');
-    const destLabel = isDemoMode ? dest : (realDest?.name || 'Destination');
+    const originLabel = loc.latitude ? 'Current Location' : 'Start Point';
+    const destLabel = realDest?.name || 'Destination';
     startJourney(selectedRoute, originLabel, destLabel);
 
     if (selectedRoute.waypoints.length > 0) {
@@ -133,17 +126,12 @@ export default function Journey() {
     setIsRerouting(true);
     setRerouteMessage(null);
     try {
-      const originParam = isDemoMode
-        ? 'College'
-        : { latitude: journey.currentPosition.lat, longitude: journey.currentPosition.lng };
+      const originParam = { latitude: journey.currentPosition.lat, longitude: journey.currentPosition.lng };
+      const destParam = journey.plannedRoute.length > 0
+        ? { latitude: journey.plannedRoute[journey.plannedRoute.length - 1].lat, longitude: journey.plannedRoute[journey.plannedRoute.length - 1].lng }
+        : (realDest ? { latitude: realDest.lat, longitude: realDest.lon } : { latitude: journey.currentPosition.lat + 0.01, longitude: journey.currentPosition.lng + 0.01 });
 
-      const destParam = isDemoMode
-        ? 'Home'
-        : (journey.plannedRoute.length > 0
-            ? { latitude: journey.plannedRoute[journey.plannedRoute.length - 1].lat, longitude: journey.plannedRoute[journey.plannedRoute.length - 1].lng }
-            : (realDest ? { latitude: realDest.lat, longitude: realDest.lon } : { latitude: journey.currentPosition.lat + 0.01, longitude: journey.currentPosition.lng + 0.01 }));
-
-      const routes = await routeService.generateSafeRoutes(originParam, destParam, isDemoMode);
+      const routes = await routeService.generateSafeRoutes(originParam, destParam, false);
       
       const bestNewRoute = routes.reduce((best, curr) => 
         (curr.routeSafetyResult?.score ?? 0) > (best.routeSafetyResult?.score ?? 0) ? curr : best
@@ -181,19 +169,19 @@ export default function Journey() {
   };
 
   // Map display data
-  const hasLocation = journey.isActive || isDemoMode || Boolean(loc.latitude && loc.longitude);
+  const hasLocation = journey.isActive || Boolean(loc.latitude && loc.longitude);
 
   const mapOrigin = phase !== 'PLANNING'
-    ? { lat: selectedRoute.waypoints[0].lat, lng: selectedRoute.waypoints[0].lng, label: isDemoMode ? origin.split(',')[0] : 'Current Location' }
-    : (isDemoMode ? { lat: selectedRoute.waypoints[0].lat, lng: selectedRoute.waypoints[0].lng, label: 'College' } : (loc.latitude && loc.longitude ? { lat: loc.latitude, lng: loc.longitude, label: 'Your Location' } : undefined));
+    ? { lat: selectedRoute.waypoints[0].lat, lng: selectedRoute.waypoints[0].lng, label: 'Current Location' }
+    : (loc.latitude && loc.longitude ? { lat: loc.latitude, lng: loc.longitude, label: 'Your Location' } : undefined);
 
   const mapDest = phase !== 'PLANNING'
-    ? { lat: selectedRoute.waypoints[selectedRoute.waypoints.length - 1].lat, lng: selectedRoute.waypoints[selectedRoute.waypoints.length - 1].lng, label: isDemoMode ? dest.split(',')[0] : (realDest?.name || 'Destination') }
-    : (isDemoMode ? { lat: selectedRoute.waypoints[selectedRoute.waypoints.length - 1].lat, lng: selectedRoute.waypoints[selectedRoute.waypoints.length - 1].lng, label: 'Home' } : (realDest ? { lat: realDest.lat, lng: realDest.lon, label: realDest.name } : undefined));
+    ? { lat: selectedRoute.waypoints[selectedRoute.waypoints.length - 1].lat, lng: selectedRoute.waypoints[selectedRoute.waypoints.length - 1].lng, label: realDest?.name || 'Destination' }
+    : (realDest ? { lat: realDest.lat, lng: realDest.lon, label: realDest.name } : undefined);
 
   const mapPos = journey.isActive 
     ? (journey.currentPosition ?? selectedRoute.waypoints[0]) 
-    : (isDemoMode ? selectedRoute.waypoints[0] : (loc.latitude && loc.longitude ? { lat: loc.latitude, lng: loc.longitude } : null));
+    : (loc.latitude && loc.longitude ? { lat: loc.latitude, lng: loc.longitude } : null);
 
   const mapRoute = phase === 'PLANNING' ? [] : (journey.isActive ? journey.plannedRoute : selectedRoute.waypoints);
   const safetyPoints = phase === 'PLANNING' ? [] : (journey.isActive ? journey.safetyPoints : selectedRoute.safetyPoints);
@@ -272,77 +260,39 @@ export default function Journey() {
             </div>
             
             <form onSubmit={handleGenerateRoutes} className="space-y-4 flex-1">
-              {isDemoMode ? (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Current Location (Demo)</label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary-400">
-                        <Target className="w-5 h-5" />
-                      </div>
-                      <input
-                        type="text"
-                        value={origin}
-                        onChange={(e) => setOrigin(e.target.value)}
-                        placeholder="Where are you starting from?"
-                        className="w-full bg-surface-800 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white focus:outline-none focus:border-primary-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Destination (Demo)</label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-safe-400">
-                        <MapPin className="w-5 h-5" />
-                      </div>
-                      <input
-                        type="text"
-                        value={dest}
-                        onChange={(e) => setDest(e.target.value)}
-                        placeholder="Where are you going?"
-                        className="w-full bg-surface-800 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white focus:outline-none focus:border-primary-500 transition-colors"
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Current Location</label>
-                    <div 
-                      onClick={() => !loc.latitude && loc.requestLocation()}
-                      className={cn(
-                        "w-full bg-surface-800 border rounded-xl py-3 px-4 flex items-center gap-3 transition-colors",
-                        loc.latitude ? "border-safe-500/50 cursor-default" : "border-white/10 cursor-pointer hover:border-primary-500/50",
-                        loc.permissionState === 'denied' && "border-danger-500/50"
-                      )}
-                    >
-                      <Target className={cn("w-5 h-5", loc.latitude ? "text-safe-400" : loc.permissionState === 'denied' ? "text-danger-400" : "text-primary-400")} />
-                      <span className={cn("text-sm", loc.latitude || loc.permissionState === 'denied' ? "text-white" : "text-slate-400")}>
-                        {loc.loading ? 'Detecting your location...' : 
-                         loc.latitude ? 'Your location ✓' : 
-                         loc.permissionState === 'denied' ? '⚠ Enable location' : 
-                         '◎ Your location'}
-                      </span>
-                    </div>
-                    {loc.error && <p className="text-xs text-danger-400 mt-1 ml-1">{loc.error}</p>}
-                    {loc.permissionState === 'denied' && (
-                      <Button variant="outline" size="sm" className="mt-2" onClick={() => loc.requestLocation()}>
-                        Allow Location
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Destination</label>
-                    <LocationAutocomplete 
-                      onSelect={setRealDest} 
-                      userLocation={loc.latitude && loc.longitude ? { lat: loc.latitude, lng: loc.longitude } : null}
-                    />
-                  </div>
-                </>
-              )}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Current Location</label>
+                <div 
+                  onClick={() => !loc.latitude && loc.requestLocation()}
+                  className={cn(
+                    "w-full bg-surface-800 border rounded-xl py-3 px-4 flex items-center gap-3 transition-colors",
+                    loc.latitude ? "border-safe-500/50 cursor-default" : "border-white/10 cursor-pointer hover:border-primary-500/50",
+                    loc.permissionState === 'denied' && "border-danger-500/50"
+                  )}
+                >
+                  <Target className={cn("w-5 h-5", loc.latitude ? "text-safe-400" : loc.permissionState === 'denied' ? "text-danger-400" : "text-primary-400")} />
+                  <span className={cn("text-sm", loc.latitude || loc.permissionState === 'denied' ? "text-white" : "text-slate-400")}>
+                    {loc.loading ? 'Detecting your location...' : 
+                     loc.latitude ? 'Your location ✓' : 
+                     loc.permissionState === 'denied' ? '⚠ Enable location' : 
+                     '◎ Your location'}
+                  </span>
+                </div>
+                {loc.error && <p className="text-xs text-danger-400 mt-1 ml-1">{loc.error}</p>}
+                {loc.permissionState === 'denied' && (
+                  <Button variant="outline" size="sm" className="mt-2" onClick={() => loc.requestLocation()}>
+                    Allow Location
+                  </Button>
+                )}
+              </div>
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Destination</label>
+                <LocationAutocomplete 
+                  onSelect={setRealDest} 
+                  userLocation={loc.latitude && loc.longitude ? { lat: loc.latitude, lng: loc.longitude } : null}
+                />
+              </div>
 
               <div className="pt-4">
                 {routeError && (
@@ -356,7 +306,7 @@ export default function Journey() {
                   variant="primary" 
                   fullWidth 
                   size="lg" 
-                  disabled={isLoading || (!isDemoMode && (!loc.latitude || !realDest))} 
+                  disabled={isLoading || (!loc.latitude || !realDest)} 
                   leftIcon={isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
                 >
                   {isLoading ? 'Analyzing routes...' : 'Show safer routes'}
@@ -602,51 +552,6 @@ export default function Journey() {
                 </div>
               )}
             </div>
-
-            {/* Demo controls */}
-            {isDemoMode && (
-              <div className="px-5 py-4 border-t border-white/10 bg-amber-500/5 flex-shrink-0">
-                <p className="text-xs font-semibold text-amber-400 mb-3 flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5" /> Demo Controls
-                </p>
-                <div className="grid grid-cols-3 gap-1.5 mb-2.5">
-                  {(['SAFE', 'CAUTION', 'HIGH_RISK'] as RiskLevel[]).map(level => (
-                    <button
-                      key={level}
-                      id={`demo-risk-${level.toLowerCase()}`}
-                      onClick={() => updateRiskLevel(level)}
-                      className={cn(
-                        'text-[10px] font-semibold py-1.5 rounded-lg border transition-all',
-                        journey.riskLevel === level
-                          ? level === 'SAFE' ? 'bg-safe-500/30 border-safe-500/60 text-safe-300' :
-                            level === 'CAUTION' ? 'bg-caution-500/30 border-caution-500/60 text-caution-300' :
-                            'bg-danger-500/30 border-danger-500/60 text-danger-300'
-                          : 'bg-surface-700/50 border-white/10 text-slate-500 hover:text-slate-300',
-                      )}
-                    >
-                      {level === 'HIGH_RISK' ? 'HIGH' : level}
-                    </button>
-                  ))}
-                </div>
-                <div className="space-y-1">
-                  {DEMO_SCENARIOS.map(s => (
-                    <button
-                      key={s.id}
-                      id={`demo-scenario-${s.id}`}
-                      onClick={() => setScenario(s.id)}
-                      className={cn(
-                        'w-full text-left text-xs px-3 py-2 rounded-lg border transition-all',
-                        activeScenario.id === s.id
-                          ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
-                          : 'bg-surface-700/40 border-transparent text-slate-500 hover:text-slate-300',
-                      )}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

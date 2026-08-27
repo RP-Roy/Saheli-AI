@@ -1,14 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   AlertOctagon, Phone, MapPin, Clock, CheckCircle,
-  Shield, Navigation, Radio, Share2, RefreshCw, Check,
+  Shield, Share2, RefreshCw, Check,
   AlertTriangle, PhoneCall, Info
 } from 'lucide-react';
 import { useDemo } from '../context/DemoContext';
 import { useApp } from '../context/AppContext';
 import { Button } from '../components/ui/Button';
-import { RiskBadge } from '../components/ui/Badge';
-import { RouteSafetyScore } from '../components/ui/RouteSafetyScore';
 import { EmergencyCircle } from '../components/emergency/EmergencyCircle';
 import { incidentService, type IncidentData, type SOSDispatchResult } from '../services/incidentService';
 import { cn } from '../utils/formatters';
@@ -218,7 +216,7 @@ export default function Emergency() {
       )}
 
       {/* ── ACTIVE INCIDENT CARD (Shown when SOS is triggered) ── */}
-      {sosActivated ? (
+      {sosActivated && (
         <section className="relative overflow-hidden rounded-3xl border-2 border-danger-500/60 bg-danger-500/15 p-6 shadow-glow-danger animate-fade-in space-y-5">
           <div className="absolute -top-12 -right-12 w-44 h-44 bg-danger-500/30 rounded-full blur-3xl pointer-events-none" />
 
@@ -409,44 +407,6 @@ export default function Emergency() {
             </button>
           </div>
         </section>
-      ) : (
-        /* ── Risk Header (When no active SOS) ── */
-        <div className={cn(
-          'relative overflow-hidden rounded-3xl border p-6 transition-all duration-500',
-          isHighRisk
-            ? 'bg-danger-500/15 border-danger-500/40'
-            : displayRisk === 'CAUTION'
-            ? 'bg-caution-500/10 border-caution-500/30'
-            : 'bg-safe-500/10 border-safe-500/30',
-        )}>
-          <div className={cn(
-            'absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl opacity-20 pointer-events-none',
-            isHighRisk ? 'bg-danger-500' : displayRisk === 'CAUTION' ? 'bg-caution-500' : 'bg-safe-500',
-          )} />
-
-          <div className="relative flex items-center gap-5">
-            <RouteSafetyScore score={displayScore} riskLevel={displayRisk} size="md" />
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <RiskBadge level={displayRisk} />
-                {journey.isActive && (
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <Radio className="w-3 h-3 text-safe-400 animate-pulse" /> Live Journey
-                  </span>
-                )}
-              </div>
-              <p className="text-xl font-bold text-white">{displayScore}%</p>
-              <p className="text-sm text-slate-400">Route Safety Score</p>
-            </div>
-          </div>
-
-          {/* Location */}
-          <div className="relative mt-4 flex items-center gap-2 text-sm text-slate-400">
-            <MapPin className="w-4 h-4 text-primary-400 flex-shrink-0" />
-            <span className="truncate">{locationAddress}</span>
-            <Navigation className="w-3.5 h-3.5 text-slate-500 ml-auto flex-shrink-0" />
-          </div>
-        </div>
       )}
 
       {/* ── Safety Check-In Prompt (if high risk/caution and not in active SOS) ── */}

@@ -13,39 +13,14 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // If Supabase is NOT configured, or the user explicitly forces demo mode
-  const isDemoUser = !isSupabaseConfigured() || localStorage.getItem('forceDemoMode') === 'true';
-
-  useEffect(() => {
-    async function initializeAuth() {
-      if (isDemoUser) {
-        // Mock user for demo mode
-        setUser({ id: 'demo-user', email: 'demo@saheliai.in', user_metadata: { name: 'Demo User' } } as any);
-        setLoading(false);
-        return;
-      }
-
-      const { data: { session } } = await authService.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-
-      const { data: { subscription } } = authService.onAuthStateChange((_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
-
-    initializeAuth();
-  }, [isDemoUser]);
+  const [user] = useState<User | null>({
+    id: 'saheli-active-user',
+    email: 'user@saheliai.in',
+    user_metadata: { name: 'Saheli User' }
+  } as any);
+  const [session] = useState<Session | null>(null);
+  const loading = false;
+  const isDemoUser = true;
 
   return (
     <AuthContext.Provider value={{ user, session, loading, isDemoUser }}>

@@ -1,19 +1,16 @@
 import { useState } from 'react';
 import {
   User, Phone, ChevronRight,
-  Lock, Eye, EyeOff, Plus, Trash2, FlaskConical, Info,
-  LogOut, Smartphone,
+  Lock, Eye, EyeOff, Plus, Trash2, Info,
+  Smartphone,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { useApp } from '../context/AppContext';
-import { useDemo } from '../context/DemoContext';
 import { TRUSTED_CONTACTS, type Contact } from '../data/mockData';
 import { cn } from '../utils/formatters';
 
 export default function Settings() {
   const { user } = useApp();
-  const { isDemoMode, toggleDemoMode } = useDemo();
   const [showPhone, setShowPhone] = useState(false);
 
   return (
@@ -30,11 +27,6 @@ export default function Settings() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-2xl font-bold text-white shadow-glow-primary">
               {user.avatar}
             </div>
-            {isDemoMode && (
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-amber-500 rounded-full border-2 border-surface-900 flex items-center justify-center">
-                <FlaskConical className="w-2.5 h-2.5 text-white" />
-              </div>
-            )}
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-bold text-white">{user.name}</h2>
@@ -52,32 +44,6 @@ export default function Settings() {
         <div className="divide-y divide-white/5">
           <SettingsRow icon={<User className="w-4 h-4 text-slate-500" />} label="Account Details" action="chevron" />
           <SettingsRow icon={<Lock className="w-4 h-4 text-slate-500" />} label="Change Password" action="chevron" />
-        </div>
-      </section>
-
-      {/* ── Demo Mode ── */}
-      <section className="glass-card overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-white/10 flex items-center gap-2">
-          <FlaskConical className="w-4 h-4 text-amber-400" />
-          <h2 className="text-sm font-bold text-white">Demo Mode</h2>
-          {isDemoMode && <Badge variant="caution" className="ml-auto">Active</Badge>}
-        </div>
-        <div className="p-5 space-y-4">
-          <ToggleRow
-            id="toggle-demo-mode"
-            label="Demo Mode"
-            description="Use simulated data — no real location or backend needed"
-            value={isDemoMode}
-            onToggle={toggleDemoMode}
-          />
-          {isDemoMode && (
-            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2">
-              <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-300/80 leading-relaxed">
-                All journey data, positions, and risk events are simulated. Supabase and Gemini are optional.
-              </p>
-            </div>
-          )}
         </div>
       </section>
 
@@ -103,45 +69,12 @@ export default function Settings() {
         </div>
       </section>
 
-      <button className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl border border-danger-500/20 bg-danger-500/5 hover:bg-danger-500/10 hover:border-danger-500/30 text-danger-400 hover:text-danger-300 transition-all">
-        <LogOut className="w-4 h-4" />
-        <span className="text-sm font-semibold">Sign Out</span>
-      </button>
-
       <p className="text-center text-slate-600 text-xs pb-4">Saheli AI v1.0.0-beta · Built with care, for every woman 💜</p>
     </div>
   );
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function ToggleRow({ id, label, description, value, onToggle }: {
-  id: string; label: string; description?: string; value: boolean; onToggle: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-3 py-3.5">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-200">{label}</p>
-        {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
-      </div>
-      <button
-        id={id}
-        onClick={onToggle}
-        role="switch"
-        aria-checked={value}
-        className={cn(
-          'relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200',
-          value ? 'bg-primary-600' : 'bg-surface-600',
-        )}
-      >
-        <span className={cn(
-          'absolute top-1 left-0 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200',
-          value ? 'translate-x-6' : 'translate-x-1',
-        )} />
-      </button>
-    </div>
-  );
-}
 
 function SettingsRow({ icon, label, value, action }: {
   icon: React.ReactNode; label: string; value?: string; action?: 'chevron';

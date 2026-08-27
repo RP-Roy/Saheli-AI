@@ -1,5 +1,4 @@
-import { ShieldHalf, FlaskConical, Bell } from 'lucide-react';
-import { cn } from '../../utils/formatters';
+import { ShieldHalf, Bell } from 'lucide-react';
 import { useDemo } from '../../context/DemoContext';
 import { useApp } from '../../context/AppContext';
 import { RiskBadge } from '../ui/Badge';
@@ -11,7 +10,7 @@ interface HeaderProps {
 }
 
 export function Header({ title }: HeaderProps) {
-  const { isDemoMode, journey } = useDemo();
+  const { journey } = useDemo();
   const { user } = useApp();
 
   return (
@@ -31,14 +30,6 @@ export function Header({ title }: HeaderProps) {
         )}
 
         <div className="ml-auto flex items-center gap-3">
-          {/* Demo mode pill */}
-          {isDemoMode && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold">
-              <FlaskConical className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Demo</span>
-            </div>
-          )}
-
           {/* Journey status pill */}
           {journey.isActive && (
             <RiskBadge level={journey.riskLevel} className="hidden sm:flex" />
@@ -64,16 +55,6 @@ export function Header({ title }: HeaderProps) {
           </div>
         </div>
       </div>
-
-      {/* Demo mode banner */}
-      {isDemoMode && (
-        <div className="px-4 sm:px-6 py-1.5 bg-amber-500/10 border-t border-amber-500/20 flex items-center gap-2">
-          <FlaskConical className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-          <p className="text-xs text-amber-300/80">
-            Demo Mode — All data is simulated. No real location or personal data is used.
-          </p>
-        </div>
-      )}
     </header>
   );
 }

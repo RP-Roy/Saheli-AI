@@ -29,20 +29,11 @@ const DemoContext = createContext<DemoContextValue | undefined>(undefined);
 // ─── Demo Provider ─────────────────────────────────────────────────────────────
 
 export function DemoProvider({ children }: { children: ReactNode }) {
-  const { isDemoUser } = useAuth();
-  const [isDemoMode, setIsDemoMode] = useState<boolean>(isDemoUser || true); // ON by default for hackathon
+  const [isDemoMode] = useState<boolean>(false);
   const [activeScenario, setActiveScenario] = useState<DemoScenario>(DEMO_SCENARIOS[0]);
   const [journey, setJourney] = useState<JourneyState>(INITIAL_JOURNEY);
 
-  useEffect(() => {
-    if (isDemoUser) {
-      setIsDemoMode(true);
-    }
-  }, [isDemoUser]);
-
-  const toggleDemoMode = useCallback(() => {
-    setIsDemoMode(prev => !prev);
-  }, []);
+  const toggleDemoMode = useCallback(() => {}, []);
 
   const setScenario = useCallback((id: string) => {
     const found = DEMO_SCENARIOS.find(s => s.id === id);
