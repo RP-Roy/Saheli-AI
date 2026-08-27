@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { RiskLevel } from '../../config/appConfig';
-import { Locate } from 'lucide-react';
+import { Locate, Shield, Plus, Cross, Bed, Fuel, Train, Coffee, ShoppingBag, MapPin } from 'lucide-react';
 
 // ─── Fix Leaflet default icon ─────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,43 +27,46 @@ interface JourneyMapProps {
   riskLevel: RiskLevel;
   isActive?: boolean;
   className?: string;
+  onRecenter?: () => void;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const INDIA_CENTER: [number, number] = [20.5937, 78.9629];
 const INDIA_ZOOM = 5;
 
-// ─── Status colors ────────────────────────────────────────────────────────────
+// ─── Soft Rose / Status Colors ────────────────────────────────────────────────
+const BRAND_ROSE = '#E85D75';
+const BRAND_ROSE_MUTED = '#F48FB1';
 
-const RISK_COLOR: Record<RiskLevel, string> = {
-  SAFE:      '#10b981',
-  CAUTION:   '#f59e0b',
-  HIGH_RISK: '#ef4444',
-};
+// ─── Custom HTML Markers ──────────────────────────────────────────────────────
 
-// ─── Custom marker HTML ───────────────────────────────────────────────────────
-
-function originMarkerHtml() {
+function originMarkerHtml(label: string = 'A') {
   return `
-    <div style="width:32px;height:32px;border-radius:50%;background:#4f46e5;border:3px solid white;
-      box-shadow:0 2px 8px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;
-      color:white;font-size:11px;font-weight:700;">A</div>`;
+    <div style="width:34px;height:34px;border-radius:18px;background:#FFFFFF;border:2.5px solid #E85D75;
+      box-shadow:0 4px 14px rgba(232,93,117,0.35);display:flex;align-items:center;justify-content:center;
+      color:#E85D75;font-size:12px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;
+      animation:saheli-pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+      ${label === 'Current Location' || label === 'Your Location' ? '◎' : 'A'}
+    </div>`;
 }
 
 function destinationMarkerHtml() {
   return `
-    <div style="width:32px;height:32px;border-radius:50%;background:#059669;border:3px solid white;
-      box-shadow:0 2px 8px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;
-      color:white;font-size:11px;font-weight:700;">B</div>`;
+    <div style="width:34px;height:34px;border-radius:18px;background:#E85D75;border:2.5px solid #FFFFFF;
+      box-shadow:0 4px 16px rgba(232,93,117,0.45);display:flex;align-items:center;justify-content:center;
+      color:#FFFFFF;font-size:12px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;
+      animation:saheli-pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+      📍
+    </div>`;
 }
 
-function currentPositionHtml(color: string) {
+function userLocationMarkerHtml() {
   return `
-    <div style="position:relative;width:40px;height:40px;">
-      <div style="position:absolute;inset:0;border-radius:50%;background:${color};opacity:0.25;
-        animation:saheli-pulse 2s ease-in-out infinite;"></div>
-      <div style="position:absolute;inset:10px;border-radius:50%;background:${color};
-        border:2.5px solid white;box-shadow:0 0 12px ${color}88;"></div>
+    <div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+      <div style="position:absolute;inset:0;border-radius:50%;background:#E85D75;opacity:0.22;
+        animation:saheli-gentle-pulse 2.2s ease-in-out infinite;"></div>
+      <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:#FFF0F3;border:2px solid #E85D75;box-shadow:0 0 10px rgba(232,93,117,0.35);"></div>
+      <div style="position:relative;width:12px;height:12px;border-radius:50%;background:#E85D75;box-shadow:0 0 6px rgba(232,93,117,0.8);"></div>
     </div>`;
 }
 
@@ -77,49 +80,65 @@ function safetyPointHtml(type: string) {
     type === 'HOTEL' ? '🏨' :
     type === 'TRANSIT' ? '🚉' :
     type === 'CAFE_RESTAURANT' ? '☕' :
-    type === 'SHOP' ? '🛍️' : '📍';
+    type === 'SHOP' ? '🛍️' : '✨';
   
-  const borderColor = 
-    type === 'POLICE' ? '#3b82f6' :
-    type === 'HOSPITAL' ? '#ef4444' :
-    type === 'PHARMACY' ? '#10b981' :
-    type === 'BANK_ATM' ? '#06b6d4' :
-    type === 'FUEL' ? '#f59e0b' :
-    type === 'HOTEL' ? '#8b5cf6' :
-    type === 'TRANSIT' ? '#6366f1' :
-    type === 'CAFE_RESTAURANT' ? '#f97316' :
-    type === 'SHOP' ? '#ec4899' : '#64748b';
-
   return `
-    <div style="width:30px;height:30px;border-radius:10px;background:#0f172a;border:2px solid ${borderColor};
-      box-shadow:0 3px 10px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;
-      font-size:15px;cursor:pointer;">${icon}</div>`;
+    <div style="width:32px;height:32px;border-radius:12px;background:#FFFFFF;border:1.5px solid #F8BBD0;
+      box-shadow:0 4px 12px rgba(232,93,117,0.18);display:flex;align-items:center;justify-content:center;
+      font-size:14px;cursor:pointer;transition:transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);"
+      onmouseover="this.style.transform='scale(1.15) translateY(-2px)'"
+      onmouseout="this.style.transform='scale(1) translateY(0)'"
+    >${icon}</div>`;
 }
 
 // ─── Keyframe injection (once) ────────────────────────────────────────────────
-
 let keyframesInjected = false;
 function injectKeyframes() {
   if (keyframesInjected) return;
   keyframesInjected = true;
   const style = document.createElement('style');
   style.textContent = `
-    @keyframes saheli-pulse {
-      0%, 100% { transform: scale(1); opacity: 0.25; }
-      50% { transform: scale(1.6); opacity: 0.1; }
+    @keyframes saheli-gentle-pulse {
+      0%, 100% { transform: scale(0.9); opacity: 0.25; }
+      50% { transform: scale(1.4); opacity: 0.08; }
+    }
+    @keyframes saheli-pop-in {
+      0% { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .leaflet-popup-content-wrapper {
+      border-radius: 18px !important;
+      padding: 4px !important;
+      box-shadow: 0 12px 32px rgba(232, 93, 117, 0.15), 0 2px 8px rgba(59, 41, 48, 0.05) !important;
+      border: 1px solid rgba(248, 187, 208, 0.8) !important;
+      background: rgba(255, 255, 255, 0.98) !important;
+    }
+    .leaflet-popup-tip {
+      background: #FFFFFF !important;
+      border: 1px solid rgba(248, 187, 208, 0.6) !important;
+    }
+    .leaflet-container {
+      font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
   `;
   document.head.appendChild(style);
 }
 
 export function JourneyMap({
-  origin, destination, currentPosition, hasLocation = true,
-  waypoints, safetyPoints = [], riskLevel, isActive = true, className = '',
+  origin,
+  destination,
+  currentPosition,
+  hasLocation = true,
+  waypoints,
+  safetyPoints = [],
+  riskLevel,
+  isActive = true,
+  className = '',
+  onRecenter,
 }: JourneyMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   
-  // Keep refs to layers so we can update them
   const layersRef = useRef({
     routeLine: null as L.Polyline | null,
     completedLine: null as L.Polyline | null,
@@ -147,15 +166,16 @@ export function JourneyMap({
     });
 
     const geoapifyKey = import.meta.env.VITE_GEOAPIFY_API_KEY;
-    const tileUrl = geoapifyKey
-      ? `https://maps.geoapify.com/v1/tile/dark-matter-purple-roads/{z}/{x}/{y}.png?apiKey=${geoapifyKey}`
+    const tileUrl = (geoapifyKey && geoapifyKey.length > 10 && !geoapifyKey.includes('your-'))
+      ? `https://maps.geoapify.com/v1/tile/osm-bright-smooth/{z}/{x}/{y}.png?apiKey=${geoapifyKey}`
       : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
     const tileAttribution = geoapifyKey
-      ? '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://www.geoapify.com/">Geoapify</a>'
+      ? '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://www.geoapify.com/">Geoapify</a>'
       : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
     L.tileLayer(tileUrl, {
       maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
     }).addTo(map);
 
     L.control.attribution({ position: 'bottomright' })
@@ -170,7 +190,7 @@ export function JourneyMap({
       mapRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty deps to strictly initialize once
+  }, []);
 
   // 2. Sync layers when props change
   useEffect(() => {
@@ -188,12 +208,18 @@ export function JourneyMap({
     if (origin) {
       if (!layers.originMarker) {
         layers.originMarker = L.marker([origin.lat, origin.lng], {
-          icon: L.divIcon({ html: originMarkerHtml(), className: '', iconSize: [32, 32], iconAnchor: [16, 16] })
+          icon: L.divIcon({ html: originMarkerHtml(origin.label), className: '', iconSize: [34, 34], iconAnchor: [17, 17] })
         }).addTo(map);
       } else {
         layers.originMarker.setLatLng([origin.lat, origin.lng]);
+        layers.originMarker.setIcon(L.divIcon({ html: originMarkerHtml(origin.label), className: '', iconSize: [34, 34], iconAnchor: [17, 17] }));
       }
-      layers.originMarker.bindPopup(`<b>Start:</b> ${origin.label}`);
+      layers.originMarker.bindPopup(`
+        <div style="padding:6px 8px;font-size:12px;color:#3B2930;">
+          <div style="font-weight:700;color:#E85D75;margin-bottom:2px;">Origin</div>
+          <div>${origin.label}</div>
+        </div>
+      `);
     } else if (layers.originMarker) {
       layers.originMarker.remove();
       layers.originMarker = null;
@@ -203,21 +229,25 @@ export function JourneyMap({
     if (destination) {
       if (!layers.destMarker) {
         layers.destMarker = L.marker([destination.lat, destination.lng], {
-          icon: L.divIcon({ html: destinationMarkerHtml(), className: '', iconSize: [32, 32], iconAnchor: [16, 16] })
+          icon: L.divIcon({ html: destinationMarkerHtml(), className: '', iconSize: [34, 34], iconAnchor: [17, 17] })
         }).addTo(map);
       } else {
         layers.destMarker.setLatLng([destination.lat, destination.lng]);
       }
-      layers.destMarker.bindPopup(`<b>Destination:</b> ${destination.label}`);
+      layers.destMarker.bindPopup(`
+        <div style="padding:6px 8px;font-size:12px;color:#3B2930;">
+          <div style="font-weight:700;color:#E85D75;margin-bottom:2px;">Destination</div>
+          <div>${destination.label}</div>
+        </div>
+      `);
     } else if (layers.destMarker) {
       layers.destMarker.remove();
       layers.destMarker = null;
     }
 
-    // --- Current Position Marker ---
+    // --- Current User Position Marker ---
     if (hasLocation && currentPosition) {
-      const posColor = RISK_COLOR[riskLevel] || RISK_COLOR.SAFE;
-      const posIcon = L.divIcon({ html: currentPositionHtml(posColor), className: '', iconSize: [40, 40], iconAnchor: [20, 20] });
+      const posIcon = L.divIcon({ html: userLocationMarkerHtml(), className: '', iconSize: [44, 44], iconAnchor: [22, 22] });
       
       if (!layers.posMarker) {
         layers.posMarker = L.marker([currentPosition.lat, currentPosition.lng], {
@@ -228,18 +258,27 @@ export function JourneyMap({
         layers.posMarker.setLatLng([currentPosition.lat, currentPosition.lng]);
         layers.posMarker.setIcon(posIcon);
       }
-      layers.posMarker.bindPopup('You are here');
+      layers.posMarker.bindPopup(`
+        <div style="padding:6px 8px;font-size:12px;color:#3B2930;">
+          <div style="font-weight:700;color:#E85D75;">Your Live Position</div>
+          <div style="color:#806B73;font-size:11px;">Protected by Saheli AI</div>
+        </div>
+      `);
     } else if (layers.posMarker) {
       layers.posMarker.remove();
       layers.posMarker = null;
     }
 
-    // --- Route Polyline ---
+    // --- Route Polyline in Vibrant Rose with Soft Glow ---
     if (hasRoute) {
       const routePoints: L.LatLngExpression[] = waypoints.map(w => [w.lat, w.lng]);
       if (!layers.routeLine) {
         layers.routeLine = L.polyline(routePoints, {
-          color: '#6366f1', weight: 5, opacity: 0.85, dashArray: '10 5', lineJoin: 'round',
+          color: BRAND_ROSE,
+          weight: 6,
+          opacity: 0.92,
+          lineJoin: 'round',
+          lineCap: 'round',
         }).addTo(map);
       } else {
         layers.routeLine.setLatLngs(routePoints);
@@ -249,42 +288,50 @@ export function JourneyMap({
       layers.routeLine = null;
     }
 
-    // --- Completed Polyline ---
+    // --- Completed Route Segment Polyline ---
     if (hasRoute && isActive && origin && currentPosition) {
-      const posColor = RISK_COLOR[riskLevel] || RISK_COLOR.SAFE;
       const completedPoints: L.LatLngExpression[] = [
         [origin.lat, origin.lng],
         [currentPosition.lat, currentPosition.lng],
       ];
       if (!layers.completedLine) {
         layers.completedLine = L.polyline(completedPoints, {
-          color: posColor, weight: 5, opacity: 0.9, lineJoin: 'round',
+          color: '#10B981',
+          weight: 6,
+          opacity: 0.95,
+          lineJoin: 'round',
+          lineCap: 'round',
         }).addTo(map);
       } else {
         layers.completedLine.setLatLngs(completedPoints);
-        layers.completedLine.setStyle({ color: posColor });
       }
     } else if (layers.completedLine) {
       layers.completedLine.remove();
       layers.completedLine = null;
     }
 
-    // --- Safety Points ---
+    // --- Safety Supporting Places ---
     if (hasRoute) {
       safetyPoints.forEach(sp => {
-        const statusBadge = sp.openingStatus === 'OPEN_24_7' ? '<span style="color:#10b981;font-weight:700;">• Open 24/7</span>' :
-          sp.openingStatus === 'OPEN' ? '<span style="color:#10b981;">• Open</span>' :
-          sp.openingStatus === 'CLOSED' ? '<span style="color:#ef4444;">• Closed</span>' : '';
+        const statusBadge = sp.openingStatus === 'OPEN_24_7'
+          ? '<span style="color:#059669;font-weight:700;background:#ECFDF5;padding:2px 6px;border-radius:6px;">• Open 24/7</span>'
+          : sp.openingStatus === 'OPEN'
+          ? '<span style="color:#059669;background:#ECFDF5;padding:2px 6px;border-radius:6px;">• Open</span>'
+          : '<span style="color:#BE123C;background:#FFE4E6;padding:2px 6px;border-radius:6px;">• Closed</span>';
         
         const popupContent = `
-          <div style="font-family:sans-serif;font-size:12px;color:#0f172a;line-height:1.4;min-width:140px;">
-            <div style="font-weight:700;font-size:13px;margin-bottom:2px;">${sp.name}</div>
-            <div style="color:#64748b;font-size:11px;text-transform:capitalize;">${sp.category.toLowerCase().replace(/_/g, ' ')} ${statusBadge}</div>
-            ${sp.distanceFromRouteMeters !== undefined ? `<div style="margin-top:4px;color:#475569;font-size:10px;">${sp.distanceFromRouteMeters}m from route</div>` : ''}
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:#3B2930;line-height:1.4;min-width:160px;padding:4px 6px;">
+            <div style="font-weight:700;font-size:13px;color:#3B2930;margin-bottom:3px;">${sp.name}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:4px;">
+              <span style="color:#806B73;font-size:11px;text-transform:capitalize;font-weight:600;">${sp.category.toLowerCase().replace(/_/g, ' ')}</span>
+              ${statusBadge}
+            </div>
+            ${sp.distanceFromRouteMeters !== undefined ? `<div style="margin-top:6px;color:#806B73;font-size:11px;font-weight:500;">📍 ${sp.distanceFromRouteMeters}m from safe route</div>` : ''}
           </div>
         `;
+
         const marker = L.marker([sp.latitude, sp.longitude], {
-          icon: L.divIcon({ html: safetyPointHtml(sp.category), className: '', iconSize: [30, 30], iconAnchor: [15, 15] }),
+          icon: L.divIcon({ html: safetyPointHtml(sp.category), className: '', iconSize: [32, 32], iconAnchor: [16, 16] }),
         }).addTo(map).bindPopup(popupContent);
         layers.safetyMarkers.push(marker);
       });
@@ -301,24 +348,33 @@ export function JourneyMap({
 
   }, [origin, destination, currentPosition, hasLocation, waypoints, safetyPoints, riskLevel, isActive]);
 
+  const handleRecenter = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onRecenter) {
+      onRecenter();
+      return;
+    }
+    if (mapRef.current) {
+      if (hasLocation && currentPosition) {
+        mapRef.current.setView([currentPosition.lat, currentPosition.lng], 15);
+      } else {
+        mapRef.current.setView(INDIA_CENTER, INDIA_ZOOM);
+      }
+    }
+  };
+
   return (
-    <div className={`relative ${className}`} style={{ minHeight: '100%' }}>
+    <div className={`relative w-full h-full overflow-hidden rounded-3xl border border-pink-200/80 shadow-card bg-white ${className}`}>
       <div ref={containerRef} className="absolute inset-0 z-0" />
+      
+      {/* Floating Recenter Pill Control */}
       <button 
-        onClick={(e) => {
-          e.preventDefault();
-          if (mapRef.current) {
-            if (hasLocation && currentPosition) {
-              mapRef.current.setView([currentPosition.lat, currentPosition.lng], 16);
-            } else {
-              mapRef.current.setView(INDIA_CENTER, INDIA_ZOOM);
-            }
-          }
-        }}
-        className="absolute bottom-6 right-4 z-[400] bg-surface-800 text-white p-2.5 rounded-full shadow-lg border border-white/10 hover:bg-surface-700 transition-colors"
-        title={hasLocation && currentPosition ? "Recenter on me" : "View whole India map"}
+        onClick={handleRecenter}
+        className="absolute bottom-5 right-4 z-[400] bg-white/95 backdrop-blur-md text-slate-700 px-3.5 py-2 rounded-2xl shadow-card-hover border border-pink-200 hover:border-primary-400 hover:text-primary-600 flex items-center gap-2 text-xs font-bold transition-all duration-200 hover:-translate-y-0.5 active:scale-95"
+        title={hasLocation && currentPosition ? "Recenter on your location" : "View whole India map"}
       >
-        <Locate className="w-5 h-5 text-primary-400" />
+        <Locate className="w-4 h-4 text-primary-500" />
+        <span>{hasLocation && currentPosition ? 'Recenter' : 'Whole Map'}</span>
       </button>
     </div>
   );

@@ -108,34 +108,34 @@ export function ContactModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in">
       <div
-        className="relative w-full max-w-md bg-surface-900 border border-white/15 rounded-3xl p-6 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-md bg-white border border-pink-200/80 rounded-3xl p-6 sm:p-7 shadow-2xl overflow-hidden animate-slide-up"
         role="dialog"
         aria-modal="true"
         aria-labelledby="contact-modal-title"
       >
         {/* Ambient background glow */}
-        <div className="absolute -top-16 -right-16 w-36 h-36 bg-primary-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-36 h-36 bg-pink-100/50 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary-500/15 border border-primary-500/30 flex items-center justify-center text-primary-400">
+        <div className="flex items-center justify-between pb-4 border-b border-pink-100 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-primary-100 text-primary-600 flex items-center justify-center shadow-sm">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="contact-modal-title" className="text-lg font-bold text-white">
+              <h2 id="contact-modal-title" className="text-base font-extrabold text-slate-900 tracking-tight">
                 {isEditing ? 'Edit Emergency Contact' : 'Add Emergency Contact'}
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 mt-0.5">
                 {isEditing ? 'Update contact details & preferences' : 'Add to your trusted emergency circle'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-surface-800 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+            className="w-8 h-8 rounded-full bg-blush-50 hover:bg-blush-100 border border-pink-200/70 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
             aria-label="Close dialog"
           >
             <X className="w-4 h-4" />
@@ -144,43 +144,43 @@ export function ContactModal({
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="mt-4 p-3 rounded-xl bg-danger-500/15 border border-danger-500/30 flex items-start gap-2.5 text-danger-300 text-xs">
+          <div className="mt-4 p-3 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-rose-700 text-xs">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <p className="leading-relaxed">{errorMessage}</p>
+            <p className="leading-relaxed font-semibold">{errorMessage}</p>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4 relative z-10">
           {/* Name Field */}
           <div>
-            <label htmlFor="contact-name" className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-primary-400" /> Full Name <span className="text-danger-400">*</span>
+            <label htmlFor="contact-name" className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-primary-500" /> Full Name <span className="text-rose-500">*</span>
             </label>
             <input
               id="contact-name"
               type="text"
               required
-              placeholder="e.g. Rahul Sharma"
+              placeholder="e.g. Ananya Sharma"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-800 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-primary-500 transition-colors"
+              className="w-full px-4 py-3 rounded-2xl bg-blush-50/60 border border-pink-200 text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:border-primary-400 focus:bg-white transition-colors"
             />
           </div>
 
           {/* Relationship Field */}
           <div>
-            <label htmlFor="contact-relation" className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <Heart className="w-3.5 h-3.5 text-pink-400" /> Relationship <span className="text-danger-400">*</span>
+            <label htmlFor="contact-relation" className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+              <Heart className="w-3.5 h-3.5 text-rose-500" /> Relationship <span className="text-rose-500">*</span>
             </label>
             <select
               id="contact-relation"
               value={relationship}
               onChange={e => setRelationship(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-800 border border-white/10 text-white text-sm focus:outline-none focus:border-primary-500 transition-colors"
+              className="w-full px-4 py-3 rounded-2xl bg-blush-50/60 border border-pink-200 text-slate-800 text-sm focus:outline-none focus:border-primary-400 focus:bg-white transition-colors"
             >
               {RELATIONSHIP_OPTIONS.map(rel => (
-                <option key={rel} value={rel} className="bg-surface-900 text-white">
+                <option key={rel} value={rel} className="bg-white text-slate-800">
                   {rel}
                 </option>
               ))}
@@ -192,15 +192,15 @@ export function ContactModal({
                 placeholder="Specify relationship"
                 value={customRelation}
                 onChange={e => setCustomRelation(e.target.value)}
-                className="mt-2 w-full px-3.5 py-2 rounded-xl bg-surface-800 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-primary-500 transition-colors"
+                className="mt-2 w-full px-4 py-2.5 rounded-2xl bg-blush-50/60 border border-pink-200 text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:border-primary-400 focus:bg-white transition-colors"
               />
             )}
           </div>
 
           {/* Phone Field */}
           <div>
-            <label htmlFor="contact-phone" className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <PhoneIcon className="w-3.5 h-3.5 text-safe-400" /> Phone Number <span className="text-danger-400">*</span>
+            <label htmlFor="contact-phone" className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+              <PhoneIcon className="w-3.5 h-3.5 text-emerald-600" /> Phone Number <span className="text-rose-500">*</span>
             </label>
             <input
               id="contact-phone"
@@ -209,7 +209,7 @@ export function ContactModal({
               placeholder="e.g. +91 98765 43210"
               value={phone}
               onChange={e => setPhone(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-surface-800 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-primary-500 transition-colors font-mono"
+              className="w-full px-4 py-3 rounded-2xl bg-blush-50/60 border border-pink-200 text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:border-primary-400 focus:bg-white transition-colors font-mono"
             />
             <p className="text-[11px] text-slate-500 mt-1">
               Include country code (e.g. +91 for India)
@@ -217,29 +217,29 @@ export function ContactModal({
           </div>
 
           {/* Explicit Consent Box */}
-          <div className="p-3.5 rounded-2xl bg-surface-800/80 border border-white/10 space-y-2">
+          <div className="p-4 rounded-2xl bg-blush-50/80 border border-pink-200/80 space-y-1.5">
             <label className="flex items-start gap-2.5 cursor-pointer">
               <input
                 id="emergency-consent-checkbox"
                 type="checkbox"
                 checked={consentGiven}
                 onChange={e => setConsentGiven(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-slate-600 text-primary-600 focus:ring-primary-500 bg-surface-900 cursor-pointer accent-primary-500"
+                className="mt-0.5 w-4 h-4 rounded border-pink-300 text-primary-600 focus:ring-primary-400 cursor-pointer accent-primary-500"
               />
-              <span className="text-xs text-slate-200 leading-relaxed select-none">
+              <span className="text-xs text-slate-700 font-semibold leading-relaxed select-none">
                 I give Saheli permission to securely store this contact and use it for emergency notifications.
               </span>
             </label>
-            <p className="text-[10px] text-slate-400 pl-6 leading-tight">
-              Emergency contacts are protected under Row Level Security and never disclosed publicly.
+            <p className="text-[10px] text-slate-500 pl-6 leading-tight">
+              Emergency contacts are strictly private and used solely during SOS events.
             </p>
           </div>
 
           {/* Actions */}
-          <div className="pt-2 flex items-center gap-3">
+          <div className="pt-3 flex items-center gap-3">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               onClick={onClose}
               fullWidth
               disabled={loading}

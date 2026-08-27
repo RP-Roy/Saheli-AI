@@ -52,25 +52,25 @@ export function Modal({ isOpen, onClose, title, children, className, size = 'md'
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-slate-900/35 backdrop-blur-md animate-fade-in"
         onClick={onClose}
       />
       {/* Panel */}
       <div
         className={cn(
-          'relative w-full glass-card p-6 animate-slide-up',
+          'relative w-full bg-white/98 backdrop-blur-xl border border-pink-200/80 rounded-3xl p-6 shadow-2xl animate-slide-up',
           MODAL_SIZES[size],
           className,
         )}
       >
         {title && (
-          <div className="flex items-center justify-between mb-4">
-            <h2 id="modal-title" className="text-lg font-bold text-white">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-pink-50">
+            <h2 id="modal-title" className="text-lg font-bold text-slate-900 tracking-tight">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+              className="text-slate-400 hover:text-slate-700 transition-colors p-1.5 rounded-full hover:bg-pink-50"
               aria-label="Close modal"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

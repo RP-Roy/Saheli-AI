@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   AlertOctagon, Phone, MapPin, Clock, CheckCircle,
   Shield, Share2, RefreshCw, Check,
-  AlertTriangle, PhoneCall, Info
+  AlertTriangle, PhoneCall, Info, Navigation2
 } from 'lucide-react';
 import { useDemo } from '../context/DemoContext';
 import { useApp } from '../context/AppContext';
@@ -12,10 +12,10 @@ import { incidentService, type IncidentData, type SOSDispatchResult } from '../s
 import { cn } from '../utils/formatters';
 
 const EMERGENCY_NUMBERS = [
-  { id: 'police',     label: 'Police',          number: '100',  color: 'text-blue-400',   bg: 'bg-blue-500/15 border-blue-500/30'  },
-  { id: 'women',      label: 'Women Helpline',   number: '1091', color: 'text-pink-400',   bg: 'bg-pink-500/15 border-pink-500/30'  },
-  { id: 'ambulance',  label: 'Ambulance',        number: '108',  color: 'text-safe-400',   bg: 'bg-safe-500/15 border-safe-500/30'  },
-  { id: 'emergency',  label: 'Emergency (All)',  number: '112',  color: 'text-danger-400', bg: 'bg-danger-500/15 border-danger-500/30' },
+  { id: 'police',     label: 'Police Help',      number: '100',  color: 'text-rose-700', bg: 'bg-rose-50 border-rose-200' },
+  { id: 'women',      label: 'Women Helpline',   number: '1091', color: 'text-primary-700', bg: 'bg-primary-50 border-primary-200' },
+  { id: 'ambulance',  label: 'Ambulance',        number: '108',  color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+  { id: 'emergency',  label: 'All Emergency',   number: '112',  color: 'text-rose-800', bg: 'bg-rose-100/70 border-rose-300' },
 ];
 
 export default function Emergency() {
@@ -43,7 +43,6 @@ export default function Emergency() {
   const [isLoadingSafe, setIsLoadingSafe] = useState(false);
 
   const displayRisk = journey.riskLevel;
-  const displayScore = journey.routeSafetyScore;
   const isHighRisk = displayRisk === 'HIGH_RISK';
   const activeContacts = contacts.filter(c => c.enabled && c.consent_given);
   const primaryContact = activeContacts[0] || contacts[0] || null;
@@ -71,7 +70,7 @@ export default function Emergency() {
         setLocationAddress(addr);
         return { ...coords, address: addr };
       } catch {
-        // Fallback to last known position or simulated location
+        // Fallback
       }
     }
 
@@ -89,12 +88,12 @@ export default function Emergency() {
     const nowTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
     setIncidentTriggerTime(nowTime);
     setIsDispatching(true);
-    setCooldownSeconds(60); // 60s cooldown for repeated SOS
+    setCooldownSeconds(60);
 
     // 1. Capture Location
     const loc = await captureCurrentLocation();
 
-    // 2. Create Incident in Supabase / Local
+    // 2. Create Incident
     const incPayload: IncidentData = {
       user_id: isDemoMode ? 'demo-user' : 'current-user',
       risk_level: 'HIGH_RISK',
@@ -108,7 +107,7 @@ export default function Emergency() {
     const incId = incData?.id || `inc-${Date.now()}`;
     setActiveIncidentId(incId);
 
-    // 3. Dispatch Notifications via Server Edge Function (passes only incId) or Simulation
+    // 3. Dispatch Notifications
     const result = await incidentService.sendSOSNotification(incId, {
       demoLocation: { lat: loc.lat, lng: loc.lng, address: loc.address },
     });
@@ -117,7 +116,7 @@ export default function Emergency() {
     setIsDispatching(false);
   };
 
-  // Repeated SOS with confirmation & cooldown
+  // Repeated SOS
   const handleRepeatSOS = async () => {
     setShowRepeatConfirm(false);
     if (!activeIncidentId) {
@@ -146,7 +145,7 @@ export default function Emergency() {
     updateRiskLevel('SAFE');
   };
 
-  // Mark Safe from Check-in prompt
+  // Mark Safe
   const markSafe = async () => {
     setIsLoadingSafe(true);
     await new Promise(r => setTimeout(r, 600));
@@ -171,7 +170,7 @@ export default function Emergency() {
         });
         setShareFeedback('Location shared via device.');
       } catch {
-        // User cancelled or share failed
+        // Cancelled
       }
     } else {
       try {
@@ -190,167 +189,161 @@ export default function Emergency() {
     setTimeout(() => setDialerNotice(null), 4500);
   };
 
-  // Notification delivery summary calculations
   const sentCount = dispatchResult?.results.filter(r => r.status === 'SENT' || r.status === 'SIMULATED').length || 0;
   const failedCount = dispatchResult?.results.filter(r => r.status === 'FAILED' || r.status === 'PROVIDER_NOT_CONFIGURED').length || 0;
 
   return (
-    <div className="page-wrapper space-y-5 max-w-2xl">
+    <div className="page-wrapper space-y-6 max-w-2xl">
 
-      {/* ── Dialer Info Toast ── */}
+      {/* ── Dialer Info Notice ── */}
       {dialerNotice && (
-        <div className="p-3.5 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center gap-2.5 text-blue-300 text-xs animate-fade-in shadow-lg">
-          <PhoneCall className="w-4 h-4 flex-shrink-0 animate-bounce" />
-          <p className="leading-snug">
-            {dialerNotice} <span className="text-slate-400">Your phone will open the dialer so you can place the call.</span>
+        <div className="p-4 rounded-2xl bg-primary-50 border border-primary-200 flex items-center gap-3 text-primary-800 text-xs animate-fade-in shadow-sm">
+          <PhoneCall className="w-4 h-4 flex-shrink-0 text-primary-600 animate-bounce" />
+          <p className="font-semibold leading-snug">
+            {dialerNotice} <span className="text-slate-500 font-normal">Opening system dialer now.</span>
           </p>
         </div>
       )}
 
-      {/* ── Share Feedback Banner ── */}
+      {/* ── Share Feedback Toast ── */}
       {shareFeedback && (
-        <div className="p-3.5 rounded-2xl bg-safe-500/15 border border-safe-500/30 flex items-center gap-2.5 text-safe-300 text-xs animate-fade-in">
-          <Check className="w-4 h-4 flex-shrink-0" />
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 text-xs font-semibold animate-fade-in shadow-sm">
+          <Check className="w-4 h-4 flex-shrink-0 text-emerald-600" />
           <p>{shareFeedback}</p>
         </div>
       )}
 
-      {/* ── ACTIVE INCIDENT CARD (Shown when SOS is triggered) ── */}
+      {/* ── ACTIVE INCIDENT CARD ── */}
       {sosActivated && (
-        <section className="relative overflow-hidden rounded-3xl border-2 border-danger-500/60 bg-danger-500/15 p-6 shadow-glow-danger animate-fade-in space-y-5">
-          <div className="absolute -top-12 -right-12 w-44 h-44 bg-danger-500/30 rounded-full blur-3xl pointer-events-none" />
+        <section className="relative overflow-hidden rounded-3xl border-2 border-rose-400 bg-white p-6 sm:p-7 shadow-card-hover animate-slide-up space-y-5">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-rose-100/50 rounded-full blur-3xl pointer-events-none" />
 
           {/* Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-danger-500/30 border border-danger-400 flex items-center justify-center text-danger-300 animate-pulse">
-                <AlertOctagon className="w-7 h-7 text-danger-400" />
+          <div className="flex items-start justify-between relative z-10">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shadow-sm animate-pulse">
+                <AlertOctagon className="w-7 h-7" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-danger-500 text-white font-black text-xs uppercase tracking-wider">
-                    ACTIVE INCIDENT
-                  </span>
-                  <span className="text-xs text-danger-300 font-semibold">
-                    Risk: HIGH
+                  <span className="px-3 py-0.5 rounded-full bg-rose-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm">
+                    ACTIVE SOS ESCALATION
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 mt-1 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-danger-400" />
+                <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-rose-500" />
                   Triggered at {incidentTriggerTime || 'Just now'}
                 </p>
               </div>
             </div>
 
             <div className="text-right">
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-900/80 text-slate-400 border border-white/10">
+              <span className="text-[10px] font-mono px-2.5 py-1 rounded-xl bg-blush-100 text-primary-800 font-bold border border-pink-200">
                 {activeIncidentId || 'INC-LIVE'}
               </span>
             </div>
           </div>
 
           {/* Status Metrics Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="p-3 rounded-2xl bg-surface-900/60 border border-white/10">
-              <p className="text-[11px] text-slate-400">Latest Location</p>
-              <p className="text-xs font-bold text-white mt-0.5 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-primary-400 flex-shrink-0" />
-                <span className="truncate">{locationCaptured ? 'Available' : 'Capturing...'}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 relative z-10">
+            <div className="p-3.5 rounded-2xl bg-blush-50/80 border border-pink-200/60">
+              <p className="text-[11px] font-bold text-slate-500">Live GPS Location</p>
+              <p className="text-xs font-bold text-slate-900 mt-1 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-primary-500 flex-shrink-0" />
+                <span className="truncate">{locationCaptured ? 'Captured ✓' : 'Acquiring...'}</span>
               </p>
-              <p className="text-[10px] text-slate-400 truncate mt-0.5">{locationAddress}</p>
+              <p className="text-[10px] text-slate-500 truncate mt-0.5">{locationAddress}</p>
             </div>
 
-            <div className="p-3 rounded-2xl bg-surface-900/60 border border-white/10">
-              <p className="text-[11px] text-slate-400">Emergency Contacts</p>
-              <p className="text-xs font-bold text-white mt-0.5">
-                {activeContacts.length} active
+            <div className="p-3.5 rounded-2xl bg-blush-50/80 border border-pink-200/60">
+              <p className="text-[11px] font-bold text-slate-500">Emergency Circle</p>
+              <p className="text-xs font-bold text-slate-900 mt-1">
+                {activeContacts.length} contacts
               </p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Ready for alerts</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Notified with map link</p>
             </div>
 
-            <div className="p-3 rounded-2xl bg-surface-900/60 border border-white/10 col-span-2 sm:col-span-1">
-              <p className="text-[11px] text-slate-400">Notification Status</p>
+            <div className="p-3.5 rounded-2xl bg-blush-50/80 border border-pink-200/60 col-span-2 sm:col-span-1">
+              <p className="text-[11px] font-bold text-slate-500">Dispatch Status</p>
               {isDispatching ? (
-                <p className="text-xs font-bold text-amber-400 mt-0.5 animate-pulse">
+                <p className="text-xs font-bold text-amber-600 mt-1 animate-pulse">
                   Sending alerts...
                 </p>
               ) : dispatchResult ? (
-                <div className="text-xs font-bold mt-0.5">
-                  <span className="text-safe-400">{sentCount} sent</span>
-                  {failedCount > 0 && <span className="text-danger-400 ml-1.5">{failedCount} failed</span>}
+                <div className="text-xs font-bold mt-1">
+                  <span className="text-emerald-700">{sentCount} sent</span>
+                  {failedCount > 0 && <span className="text-rose-600 ml-1.5">{failedCount} failed</span>}
                 </div>
               ) : (
-                <p className="text-xs font-bold text-slate-400 mt-0.5">Pending</p>
+                <p className="text-xs font-bold text-slate-500 mt-1">Pending</p>
               )}
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                {isDemoMode ? 'Simulated delivery' : 'Server dispatch'}
-              </p>
+              <p className="text-[10px] text-slate-500 mt-0.5">High priority SMS</p>
             </div>
           </div>
 
-          {/* SOS Progression Stepper */}
-          <div className="p-4 rounded-2xl bg-surface-900/80 border border-white/10 space-y-2.5">
-            <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">Emergency Flow Status</p>
+          {/* Progressive SOS Stepper */}
+          <div className="p-4 rounded-2xl bg-blush-100/60 border border-pink-200/80 space-y-2.5 relative z-10">
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Escalation Flow</p>
             
             <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-safe-300">
-                <CheckCircle className="w-4 h-4 text-safe-400 flex-shrink-0" />
-                <span>Incident created ({activeIncidentId})</span>
+              <div className="flex items-center gap-2 text-emerald-800 font-medium">
+                <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span>Incident securely created ({activeIncidentId})</span>
               </div>
 
-              <div className="flex items-center gap-2 text-safe-300">
-                <CheckCircle className="w-4 h-4 text-safe-400 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-emerald-800 font-medium">
+                <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 <span>Location captured ({locationAddress})</span>
               </div>
 
               {isDispatching ? (
-                <div className="flex items-center gap-2 text-amber-300 animate-pulse">
-                  <RefreshCw className="w-4 h-4 animate-spin flex-shrink-0" />
-                  <span>Dispatching SOS message to emergency circle...</span>
+                <div className="flex items-center gap-2 text-amber-800 font-bold animate-pulse">
+                  <RefreshCw className="w-4 h-4 animate-spin text-amber-600 flex-shrink-0" />
+                  <span>Dispatching SOS SMS alert to emergency circle...</span>
                 </div>
               ) : dispatchResult?.results && dispatchResult.results.length > 0 ? (
                 dispatchResult.results.map(r => (
-                  <div key={r.contactId} className="flex items-center justify-between gap-2 pl-6">
+                  <div key={r.contactId} className="flex items-center justify-between gap-2 pl-6 py-1">
                     <div className="flex items-center gap-2">
                       {r.status === 'SENT' || r.status === 'SIMULATED' ? (
-                        <CheckCircle className="w-3.5 h-3.5 text-safe-400" />
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
                       ) : (
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                       )}
-                      <span className="text-slate-200">{r.name} ({r.relationship})</span>
-                      <span className="text-[10px] text-slate-400">
-                        {r.status === 'SENT' ? 'Notified via SMS' : r.status === 'SIMULATED' ? 'Notified (Demo)' : 'Notification could not be delivered.'}
+                      <span className="text-slate-800 font-bold">{r.name} ({r.relationship})</span>
+                      <span className="text-[10px] text-slate-500">
+                        {r.status === 'SENT' ? '• SMS Delivered' : r.status === 'SIMULATED' ? '• Notified (Demo)' : '• Delivery pending'}
                       </span>
                     </div>
 
                     <a
                       href={`tel:${contacts.find(c => c.id === r.contactId)?.phone || ''}`}
                       onClick={() => handleDialerClick(r.name)}
-                      className="text-[11px] px-2 py-0.5 rounded-lg bg-surface-700 hover:bg-surface-600 border border-white/10 text-primary-300 flex items-center gap-1 font-semibold"
+                      className="text-[11px] px-2.5 py-1 rounded-xl bg-white hover:bg-pink-50 border border-pink-200 text-primary-700 flex items-center gap-1 font-bold shadow-sm"
                     >
                       <Phone className="w-3 h-3" /> Call {r.name.split(' ')[0]}
                     </a>
                   </div>
                 ))
               ) : (
-                <div className="flex items-center gap-2 text-slate-400 pl-6">
-                  <Info className="w-3.5 h-3.5 text-slate-400" />
-                  <span>No emergency contacts were configured or active.</span>
+                <div className="flex items-center gap-2 text-slate-500 pl-6">
+                  <Info className="w-3.5 h-3.5" />
+                  <span>No emergency contacts configured yet.</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Primary Action Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 relative z-10">
             {primaryContact && (
               <a
                 href={`tel:${primaryContact.phone}`}
                 onClick={() => handleDialerClick(primaryContact.name)}
-                className="w-full py-3 px-4 rounded-2xl bg-safe-600 hover:bg-safe-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98]"
+                className="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
               >
                 <PhoneCall className="w-4 h-4" />
-                Call Primary Contact ({primaryContact.name.split(' ')[0]})
+                Call Primary ({primaryContact.name.split(' ')[0]})
               </a>
             )}
 
@@ -360,25 +353,24 @@ export default function Emergency() {
               onClick={shareLocation}
               fullWidth
             >
-              Share Location
+              Share Live Location Link
             </Button>
           </div>
 
-          {/* Secondary Actions: Send SOS Again & Resolve Incident */}
-          <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-            {/* Send SOS Again with Cooldown */}
+          {/* Secondary Actions */}
+          <div className="flex items-center justify-between pt-3 border-t border-pink-100 text-xs relative z-10">
             {showRepeatConfirm ? (
               <div className="flex items-center gap-2">
-                <span className="text-danger-300 font-semibold">Resend SOS alert?</span>
+                <span className="text-rose-700 font-bold">Resend SOS SMS?</span>
                 <button
                   onClick={handleRepeatSOS}
-                  className="px-2.5 py-1 rounded-lg bg-danger-600 text-white font-bold hover:bg-danger-500 transition-colors"
+                  className="px-3 py-1 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 transition-colors shadow-sm"
                 >
                   Yes, Resend
                 </button>
                 <button
                   onClick={() => setShowRepeatConfirm(false)}
-                  className="px-2 py-1 text-slate-400 hover:text-white"
+                  className="px-2 py-1 text-slate-500 hover:text-slate-700 font-semibold"
                 >
                   Cancel
                 </button>
@@ -388,37 +380,37 @@ export default function Emergency() {
                 disabled={cooldownSeconds > 0}
                 onClick={() => setShowRepeatConfirm(true)}
                 className={cn(
-                  'flex items-center gap-1.5 font-semibold transition-colors',
+                  'flex items-center gap-1.5 font-bold transition-colors',
                   cooldownSeconds > 0
-                    ? 'text-slate-500 cursor-not-allowed'
-                    : 'text-danger-400 hover:text-danger-300 underline'
+                    ? 'text-slate-400 cursor-not-allowed'
+                    : 'text-rose-600 hover:text-rose-700 underline'
                 )}
               >
                 <RefreshCw className={cn('w-3.5 h-3.5', cooldownSeconds > 0 && 'animate-spin')} />
-                {cooldownSeconds > 0 ? `Send SOS Again (${cooldownSeconds}s)` : 'Send SOS Again'}
+                {cooldownSeconds > 0 ? `Resend SOS (${cooldownSeconds}s cooldown)` : 'Resend SOS Alert'}
               </button>
             )}
 
             <button
               onClick={resolveIncident}
-              className="text-slate-400 hover:text-white font-semibold underline transition-colors"
+              className="text-slate-500 hover:text-slate-800 font-bold underline transition-colors"
             >
-              Resolve Incident
+              Resolve & Close Incident
             </button>
           </div>
         </section>
       )}
 
-      {/* ── Safety Check-In Prompt (if high risk/caution and not in active SOS) ── */}
+      {/* ── Safety Check-In Prompt (if cautioned and not in active SOS) ── */}
       {(isHighRisk || displayRisk === 'CAUTION') && !sosActivated && !safetyCheckResponded && (
-        <div className="glass-card p-5 border-caution-500/30 bg-caution-500/5 animate-fade-in">
-          <div className="flex items-start gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-caution-500/20 flex items-center justify-center flex-shrink-0">
-              <Shield className="w-5 h-5 text-caution-400" />
+        <div className="glass-card p-6 border-amber-300 bg-amber-50/50 animate-slide-up">
+          <div className="flex items-start gap-3.5 mb-4">
+            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+              <Shield className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-bold text-white">Safety Check-In</h2>
-              <p className="text-sm text-slate-400 mt-0.5">We detected something unusual. Are you safe?</p>
+              <h2 className="font-extrabold text-slate-900 text-base">Safety Check-In</h2>
+              <p className="text-xs text-slate-600 mt-0.5">We noticed an unexpected stop or detour. Are you safe?</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -447,47 +439,59 @@ export default function Emergency() {
 
       {/* ── Marked Safe Confirmation ── */}
       {safetyCheckResponded && !sosActivated && (
-        <div className="glass-card p-5 border-safe-500/30 bg-safe-500/5 flex items-center gap-3 animate-fade-in">
-          <CheckCircle className="w-8 h-8 text-safe-400 flex-shrink-0" />
+        <div className="glass-card p-5 border-emerald-200 bg-emerald-50/60 flex items-center gap-3.5 animate-fade-in">
+          <CheckCircle className="w-8 h-8 text-emerald-600 flex-shrink-0" />
           <div>
-            <p className="font-bold text-safe-300">You're marked as safe</p>
-            <p className="text-sm text-slate-400">Your trusted circle status has been refreshed.</p>
+            <p className="font-bold text-emerald-900 text-sm">You're marked as safe</p>
+            <p className="text-xs text-emerald-700 mt-0.5">Your journey status has been refreshed.</p>
           </div>
         </div>
       )}
 
-      {/* ── Prominent SOS Trigger Button (when not activated) ── */}
+      {/* ── Prominent Breathing SOS Button (when not activated) ── */}
       {!sosActivated && (
-        <div className="glass-card p-6 text-center">
-          <p className="text-sm text-slate-400 mb-5">
-            In an immediate emergency, activate SOS to alert your trusted circle instantly with your live location.
+        <div className="glass-card p-8 text-center relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-100/40 rounded-full blur-3xl pointer-events-none" />
+
+          <p className="text-xs text-slate-500 font-medium max-w-md mx-auto mb-6 leading-relaxed">
+            In an emergency, tap the SOS button to instantly alert your trusted circle with your live location coordinates.
           </p>
-          <button
-            id="sos-button"
-            onClick={activateSOS}
-            className={cn(
-              'mx-auto flex items-center justify-center w-28 h-28 rounded-full border-4',
-              'bg-danger-600 border-danger-400 text-white font-black text-lg tracking-widest',
-              'hover:bg-danger-500 hover:scale-105 active:scale-95',
-              'transition-all duration-200 shadow-glow-danger',
-            )}
-            aria-label="Activate Emergency SOS"
-          >
-            SOS
-          </button>
-          <p className="text-xs text-slate-500 mt-4">
+
+          <div className="relative inline-flex items-center justify-center my-2">
+            {/* Pulsing breathing outer wave */}
+            <div className="absolute w-36 h-36 rounded-full bg-rose-400/25 animate-pulse-gentle pointer-events-none" />
+            <div className="absolute w-44 h-44 rounded-full bg-rose-300/15 animate-ping pointer-events-none opacity-40" />
+
+            <button
+              id="sos-button"
+              onClick={activateSOS}
+              className={cn(
+                'relative z-10 flex items-center justify-center w-28 h-28 rounded-full border-4 border-white',
+                'bg-gradient-to-br from-rose-500 via-rose-600 to-rose-700 text-white font-black text-xl tracking-widest',
+                'hover:scale-105 active:scale-95 shadow-glow-danger transition-all duration-300',
+              )}
+              aria-label="Activate Emergency SOS"
+            >
+              SOS
+            </button>
+          </div>
+
+          <p className="text-[11px] font-bold text-rose-600 mt-6 tracking-wide">
             Tap to activate instant emergency escalation
           </p>
         </div>
       )}
 
-      {/* ── Emergency Circle Component (Contacts Management & Calling) ── */}
+      {/* ── Emergency Circle Component ── */}
       <EmergencyCircle />
 
-      {/* ── Direct Emergency Service Numbers ── */}
+      {/* ── Direct Emergency Services ── */}
       <div>
-        <h2 className="section-title mb-3">Emergency Services</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-extrabold text-slate-900 tracking-tight">Direct Emergency Services</h2>
+          <span className="text-xs text-slate-500 font-medium">Toll-Free Numbers</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3.5">
           {EMERGENCY_NUMBERS.map(({ id, label, number, color, bg }) => (
             <a
               key={id}
@@ -495,19 +499,22 @@ export default function Emergency() {
               id={`emergency-${id}`}
               onClick={() => handleDialerClick(label)}
               className={cn(
-                'flex items-center gap-3 p-4 rounded-2xl border transition-all hover:scale-[1.02] active:scale-[0.99]',
+                'flex items-center gap-3.5 p-4 rounded-3xl border transition-all hover:-translate-y-0.5 hover:shadow-card active:scale-[0.98]',
                 bg,
               )}
             >
-              <Phone className={cn('w-5 h-5 flex-shrink-0', color)} />
+              <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                <Phone className={cn('w-5 h-5', color)} />
+              </div>
               <div>
-                <p className={cn('text-base font-black', color)}>{number}</p>
-                <p className="text-xs text-slate-400">{label}</p>
+                <p className={cn('text-base font-black tracking-tight leading-none', color)}>{number}</p>
+                <p className="text-xs text-slate-600 mt-1 font-semibold">{label}</p>
               </div>
             </a>
           ))}
         </div>
       </div>
+
     </div>
   );
 }

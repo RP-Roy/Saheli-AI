@@ -7,12 +7,12 @@ import { Header } from '../components/navigation/Header';
 
 export function AppLayout() {
   return (
-    <div className="min-h-screen bg-surface-900 flex">
+    <div className="min-h-screen bg-blush-200 text-slate-800 flex relative selection:bg-primary-100 selection:text-primary-800">
       {/* Desktop sidebar */}
       <Sidebar />
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col lg:pl-64 min-h-screen">
+      <div className="flex-1 flex flex-col lg:pl-64 min-h-screen relative z-10">
         <Header />
 
         {/* Page content */}

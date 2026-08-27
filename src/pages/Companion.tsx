@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  Send, Trash2, ShieldHalf, User, Loader2,
-  RotateCcw, Sparkles,
+  Send, Trash2, Shield, User, Loader2,
+  RotateCcw, Sparkles, Navigation, Play, ArrowRight
 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { sendMessage } from '../services/chatService';
 import type { ChatMessage as Message } from '../services/gemini';
 import { cn, formatTime } from '../utils/formatters';
@@ -19,7 +19,7 @@ const QUICK_PROMPTS = [
 const INITIAL_MESSAGE: Message = {
   id: 'init',
   role: 'assistant',
-  content: "Hi! I'm **Saheli**, your standalone AI safety & personal assistance companion 🛡️\n\nI'm here to provide calm advice, emergency guidance, situational awareness tips, de-escalation strategies, and everyday support whenever you need it.\n\nHow can I assist you right now?",
+  content: "Hi! I'm **Saheli**, your predictive safety & personal companion 🌸\n\nI'm here to provide calm advice, real-time safety strategies, de-escalation tips, self-defense guidance, and route recommendations whenever you need reassurance.\n\nHow can I help you feel safer today?",
   timestamp: new Date(),
 };
 
@@ -33,6 +33,7 @@ export default function Companion() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -104,53 +105,53 @@ export default function Companion() {
   return (
     <div className="flex flex-col h-[calc(100dvh-9rem)] lg:h-[calc(100dvh-5rem)] max-w-4xl mx-auto w-full px-3 sm:px-6 py-2">
       {/* ── Main Chat Card ── */}
-      <div className="flex-1 flex flex-col bg-surface-800/80 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="flex-1 flex flex-col bg-white/95 backdrop-blur-xl border border-pink-200/80 rounded-3xl overflow-hidden shadow-card">
 
         {/* ── Header ── */}
-        <div className="flex items-center gap-4 px-5 py-3.5 border-b border-white/10 bg-surface-900/90 backdrop-blur-sm flex-shrink-0">
-          {/* Avatar */}
+        <div className="flex items-center gap-4 px-6 py-4 border-b border-pink-100 bg-white/80 backdrop-blur-md flex-shrink-0">
+          {/* Breathing Avatar */}
           <div className="relative flex-shrink-0">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-glow-primary">
-              <ShieldHalf className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500 to-rose-400 flex items-center justify-center shadow-soft-pink">
+              <Shield className="w-5 h-5 text-white" />
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-safe-500 rounded-full border-2 border-surface-900" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-white leading-tight">Saheli AI</h1>
-              <span className="flex items-center gap-1 text-[10px] bg-primary-500/20 text-primary-300 border border-primary-500/30 px-2 py-0.5 rounded-full font-medium">
-                <Sparkles className="w-2.5 h-2.5" /> AI Assistant
+              <h1 className="text-base font-extrabold text-slate-900 leading-tight tracking-tight">Saheli AI</h1>
+              <span className="flex items-center gap-1 text-[10px] bg-primary-50 text-primary-700 border border-primary-200/70 px-2.5 py-0.5 rounded-full font-bold">
+                <Sparkles className="w-2.5 h-2.5" /> Safety Companion
               </span>
             </div>
-            <p className="text-xs text-safe-400 font-medium">Always here to support & assist you</p>
+            <p className="text-xs text-emerald-700 font-semibold mt-0.5">Online & ready to assist you</p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               id="clear-chat-btn"
               onClick={clearChat}
-              title="Clear chat"
-              className="w-8 h-8 rounded-xl bg-surface-700 hover:bg-surface-600 border border-white/10 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-all"
+              title="Clear conversation"
+              className="w-9 h-9 rounded-2xl bg-blush-50 hover:bg-blush-100 border border-pink-200/70 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all active:scale-95"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* ── Messages ── */}
-        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
+        {/* ── Messages List ── */}
+        <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4 bg-blush-100/30">
           {messages.map(msg => (
-            <ChatMessage key={msg.id} message={msg} />
+            <ChatMessage key={msg.id} message={msg} onNavigateRoute={() => navigate('/journey')} onNavigateLearn={() => navigate('/learn')} />
           ))}
 
           {isLoading && (
             <div className="flex items-start gap-3 animate-fade-in">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <ShieldHalf className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-2xl bg-gradient-to-br from-primary-500 to-rose-400 flex items-center justify-center flex-shrink-0 shadow-sm mt-0.5">
+                <Shield className="w-4 h-4 text-white" />
               </div>
-              <div className="glass-card px-4 py-3 max-w-[300px]">
-                <div className="flex items-center gap-1.5">
+              <div className="bg-white border border-pink-200/70 px-4 py-3 rounded-3xl rounded-tl-md shadow-sm max-w-[280px]">
+                <div className="flex items-center gap-1.5 py-1">
                   <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -160,15 +161,15 @@ export default function Companion() {
           )}
 
           {error && (
-            <div className="mx-auto max-w-sm text-center px-4 py-3 rounded-2xl bg-danger-500/10 border border-danger-500/30 text-sm text-danger-300 flex flex-col items-center gap-2">
+            <div className="mx-auto max-w-sm text-center px-4 py-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold flex flex-col items-center gap-2">
               <p>{error}</p>
               {lastPrompt && (
                 <button
                   onClick={handleRetry}
                   disabled={isLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-700 hover:bg-surface-600 border border-white/10 rounded-lg text-xs text-white font-medium transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-rose-100 border border-rose-200 rounded-xl text-xs text-rose-800 font-bold transition-colors shadow-sm"
                 >
-                  <RotateCcw className="w-3 h-3" /> Retry
+                  <RotateCcw className="w-3 h-3" /> Retry Prompt
                 </button>
               )}
             </div>
@@ -176,16 +177,16 @@ export default function Companion() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* ── Quick Prompts ── */}
+        {/* ── Quick Prompts Pills ── */}
         {messages.length <= 2 && (
-          <div className="px-4 pb-3 flex-shrink-0">
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="px-5 pb-3 pt-2 flex-shrink-0 bg-white/95 border-t border-pink-50">
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
               {QUICK_PROMPTS.map(p => (
                 <button
                   key={p}
                   id={`quick-prompt-${p.slice(0, 15).replace(/\s+/g, '-').toLowerCase()}`}
                   onClick={() => handleSend(p)}
-                  className="flex-shrink-0 px-3.5 py-2 rounded-xl bg-surface-700/60 border border-white/10 text-xs text-slate-300 hover:text-white hover:border-primary-500/30 hover:bg-surface-700 transition-all whitespace-nowrap max-w-[280px] truncate"
+                  className="flex-shrink-0 px-4 py-2 rounded-2xl bg-blush-50 hover:bg-blush-100 border border-pink-200/80 text-xs font-semibold text-slate-700 hover:text-primary-700 transition-all whitespace-nowrap max-w-[280px] truncate shadow-sm hover:-translate-y-0.5 active:scale-95"
                 >
                   {p}
                 </button>
@@ -194,18 +195,18 @@ export default function Companion() {
           </div>
         )}
 
-        {/* ── Input ── */}
-        <div className="px-4 pb-4 pt-2 border-t border-white/5 bg-surface-900/60 flex-shrink-0">
-          <div className="flex items-end gap-3 bg-surface-800 border border-white/10 rounded-2xl px-4 py-3 focus-within:border-primary-500/40 transition-all">
+        {/* ── Input Bar ── */}
+        <div className="px-5 pb-5 pt-3 border-t border-pink-100 bg-white flex-shrink-0">
+          <div className="flex items-end gap-3 bg-blush-50/70 border border-pink-200/80 rounded-2xl px-4 py-3 focus-within:border-primary-400 focus-within:bg-white transition-all shadow-sm">
             <textarea
               ref={inputRef}
               id="companion-input"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Saheli anything for safety & personal assistance..."
+              placeholder="Ask Saheli anything about safety, routes, or guidance..."
               rows={1}
-              className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none resize-none leading-relaxed max-h-32"
+              className="flex-1 bg-transparent text-sm font-medium text-slate-800 placeholder-slate-400 outline-none resize-none leading-relaxed max-h-32"
             />
             <button
               id="companion-send-btn"
@@ -214,50 +215,81 @@ export default function Companion() {
               className={cn(
                 'flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all',
                 input.trim() && !isLoading
-                  ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-glow-primary'
-                  : 'bg-surface-700 text-slate-600 cursor-not-allowed',
+                  ? 'bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white shadow-soft-pink hover:scale-105 active:scale-95'
+                  : 'bg-pink-100 text-pink-300 cursor-not-allowed',
               )}
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>
           </div>
 
-          <p className="text-center text-[10px] text-slate-500 mt-2">Saheli provides AI safety assistance. For immediate danger, call 112.</p>
+          <p className="text-center text-[11px] text-slate-400 mt-2 font-medium">Saheli provides AI safety guidance. For immediate danger, always trigger SOS or call 112.</p>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Chat Message ─────────────────────────────────────────────────────────────
+// ─── Chat Message Bubble ──────────────────────────────────────────────────────
 
-function ChatMessage({ message }: { message: Message }) {
+function ChatMessage({
+  message,
+  onNavigateRoute,
+  onNavigateLearn
+}: {
+  message: Message;
+  onNavigateRoute: () => void;
+  onNavigateLearn: () => void;
+}) {
   const isAssistant = message.role === 'assistant';
 
   return (
     <div className={cn('flex items-start gap-3 animate-fade-in', !isAssistant && 'flex-row-reverse')}>
       {/* Avatar */}
       <div className={cn(
-        'w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5',
+        'w-8 h-8 rounded-2xl flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm',
         isAssistant
-          ? 'bg-gradient-to-br from-primary-500 to-accent-500'
-          : 'bg-surface-700 border border-white/10',
+          ? 'bg-gradient-to-br from-primary-500 to-rose-400 text-white'
+          : 'bg-blush-200 border border-pink-300 text-primary-700',
       )}>
         {isAssistant
-          ? <ShieldHalf className="w-4 h-4 text-white" />
-          : <User className="w-4 h-4 text-slate-400" />
+          ? <Shield className="w-4 h-4" />
+          : <User className="w-4 h-4" />
         }
       </div>
 
       {/* Bubble */}
       <div className={cn(
-        'max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
+        'max-w-[80%] px-4.5 py-3.5 rounded-3xl text-sm leading-relaxed shadow-sm',
         isAssistant
-          ? 'glass-card text-slate-200 rounded-tl-md'
-          : 'bg-primary-600 text-white rounded-tr-md',
+          ? 'bg-white text-slate-800 border border-pink-200/80 rounded-tl-md'
+          : 'bg-primary-500 text-white rounded-tr-md font-medium shadow-soft-pink',
       )}>
-        <FormattedText text={message.content} />
-        <p className={cn('text-[10px] mt-2 opacity-50', isAssistant ? 'text-slate-400' : 'text-white')}>
+        <FormattedText text={message.content} isAssistant={isAssistant} />
+
+        {/* Dynamic Route Recommendation Card in Chat */}
+        {isAssistant && message.content.toLowerCase().includes('safer route') && (
+          <div className="mt-3 p-3 rounded-2xl bg-blush-50 border border-pink-200 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center">
+                <Navigation className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">Safe Route Planner</p>
+                <p className="text-[10px] text-slate-500">Analyze lit corridors & landmarks</p>
+              </div>
+            </div>
+            <button
+              onClick={onNavigateRoute}
+              className="px-3 py-1.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-xs font-bold flex items-center gap-1 shadow-sm transition-all"
+            >
+              <span>Open</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
+        <p className={cn('text-[10px] mt-2 opacity-60 font-semibold', isAssistant ? 'text-slate-400' : 'text-white')}>
           {formatTime(message.timestamp)}
         </p>
       </div>
@@ -267,13 +299,13 @@ function ChatMessage({ message }: { message: Message }) {
 
 // ─── Formatted text (bold, newlines) ─────────────────────────────────────────
 
-function FormattedText({ text }: { text: string }) {
+function FormattedText({ text, isAssistant }: { text: string; isAssistant: boolean }) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return (
     <span>
       {parts.map((part, i) =>
         part.startsWith('**') && part.endsWith('**')
-          ? <strong key={i} className="font-bold text-white">{part.slice(2, -2)}</strong>
+          ? <strong key={i} className={cn('font-extrabold', isAssistant ? 'text-slate-900' : 'text-white')}>{part.slice(2, -2)}</strong>
           : part.split('\n').map((line, j) => (
               <span key={`${i}-${j}`}>{line}{j < part.split('\n').length - 1 && <br />}</span>
             ))

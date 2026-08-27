@@ -15,11 +15,11 @@ interface EmergencyCircleProps {
 }
 
 const AVATAR_GRADIENTS = [
-  'from-violet-500 to-purple-600',
-  'from-blue-500 to-indigo-600',
-  'from-rose-500 to-pink-600',
-  'from-emerald-500 to-teal-600',
-  'from-amber-500 to-orange-600',
+  'from-rose-500 to-pink-500',
+  'from-primary-500 to-rose-400',
+  'from-fuchsia-500 to-pink-500',
+  'from-emerald-500 to-teal-500',
+  'from-amber-500 to-orange-500',
 ];
 
 export function EmergencyCircle({ className, showTitle = true }: EmergencyCircleProps) {
@@ -75,23 +75,23 @@ export function EmergencyCircle({ className, showTitle = true }: EmergencyCircle
   const isMaxReached = contacts.length >= 5;
 
   return (
-    <div className={cn('glass-card overflow-hidden', className)}>
+    <div className={cn('glass-card overflow-hidden bg-white/95', className)}>
       {/* Header */}
       {showTitle && (
-        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary-500/20 border border-primary-500/30 flex items-center justify-center text-primary-400">
-              <Users className="w-4 h-4" />
+        <div className="px-6 py-5 border-b border-pink-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-primary-100 text-primary-600 flex items-center justify-center shadow-sm">
+              <Users className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-white tracking-wide">EMERGENCY CIRCLE</h2>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-surface-700 text-slate-300 border border-white/10">
+                <h2 className="text-sm font-extrabold text-slate-900 tracking-tight">EMERGENCY CIRCLE</h2>
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blush-100 text-primary-700 border border-pink-200">
                   {contacts.length}/5
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                {activeCount} active for instant SOS notification & emergency calls
+              <p className="text-xs text-slate-500 mt-0.5">
+                {activeCount} active for instant SOS notification & one-tap emergency calls
               </p>
             </div>
           </div>
@@ -112,24 +112,24 @@ export function EmergencyCircle({ className, showTitle = true }: EmergencyCircle
 
       {/* Dialer Notice Notification */}
       {dialerNotice && (
-        <div className="mx-5 mt-4 p-3 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center gap-2.5 text-blue-300 text-xs animate-fade-in">
-          <Info className="w-4 h-4 flex-shrink-0" />
+        <div className="mx-6 mt-4 p-3.5 rounded-2xl bg-primary-50 border border-primary-200 flex items-center gap-2.5 text-primary-800 text-xs font-medium animate-fade-in shadow-sm">
+          <Info className="w-4 h-4 flex-shrink-0 text-primary-600" />
           <p className="leading-snug">
-            {dialerNotice} <span className="text-slate-400">Your phone will open the dialer so you can place the call.</span>
+            {dialerNotice} <span className="text-slate-500">Your phone will open the dialer so you can place the call.</span>
           </p>
         </div>
       )}
 
       {/* Contact List */}
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-pink-50">
         {contacts.length === 0 ? (
           <div className="p-8 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-surface-700/60 border border-white/10 flex items-center justify-center text-slate-400 mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-blush-100 text-primary-500 flex items-center justify-center mx-auto shadow-sm">
               <Users className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-200">No emergency contacts configured</p>
-              <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              <p className="text-sm font-bold text-slate-800">No emergency contacts configured</p>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
                 Add up to 5 trusted family members or friends who will receive SOS alerts with your live location.
               </p>
             </div>
@@ -158,14 +158,14 @@ export function EmergencyCircle({ className, showTitle = true }: EmergencyCircle
               <div
                 key={contact.id || index}
                 className={cn(
-                  'flex items-center gap-3 px-5 py-3.5 transition-colors',
-                  contact.enabled ? 'hover:bg-white/[0.02]' : 'opacity-60 bg-surface-900/30'
+                  'flex items-center gap-3.5 px-6 py-4 transition-colors',
+                  contact.enabled ? 'hover:bg-blush-50/60' : 'opacity-60 bg-slate-50/60'
                 )}
               >
                 {/* Avatar */}
                 <div
                   className={cn(
-                    'w-10 h-10 rounded-full bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white flex-shrink-0 shadow-sm',
+                    'w-10 h-10 rounded-2xl bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white flex-shrink-0 shadow-sm',
                     gradient
                   )}
                 >
@@ -175,73 +175,74 @@ export function EmergencyCircle({ className, showTitle = true }: EmergencyCircle
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-100 truncate">{contact.name}</p>
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-surface-700 text-slate-300 border border-white/5 flex-shrink-0">
+                    <p className="text-sm font-bold text-slate-900 truncate">{contact.name}</p>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blush-100 text-primary-800 border border-pink-200/70 flex-shrink-0">
                       {contact.relationship}
                     </span>
                     {contact.enabled ? (
-                      <span className="text-[10px] font-semibold text-safe-400 bg-safe-500/10 px-1.5 py-0.5 rounded border border-safe-500/20">
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                         Active
                       </span>
                     ) : (
-                      <span className="text-[10px] font-semibold text-slate-500 bg-surface-700/60 px-1.5 py-0.5 rounded border border-white/5">
+                      <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
                         Disabled
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center gap-2 mt-1">
                     <button
                       onClick={() => contact.id && toggleRevealPhone(contact.id)}
-                      className="text-xs text-slate-400 font-mono hover:text-slate-200 transition-colors"
+                      className="text-xs text-slate-500 font-mono hover:text-primary-600 transition-colors"
                       title="Click to view/mask number"
                     >
                       {displayPhone}
                     </button>
                     {contact.consent_given && (
-                      <span className="text-[10px] text-safe-400 flex items-center gap-0.5" title="Consent recorded">
-                        <ShieldCheck className="w-3 h-3" />
+                      <span className="text-[10px] text-emerald-700 flex items-center gap-0.5 font-semibold" title="Consent recorded">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Consent recorded</span>
                       </span>
                     )}
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {/* Call Button (opens phone dialer) */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Call Button */}
                   <a
                     href={`tel:${contact.phone}`}
                     onClick={() => handleCallClick(contact.name)}
                     className={cn(
-                      'px-3 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-semibold transition-all',
+                      'px-3.5 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-all shadow-sm',
                       contact.enabled
-                        ? 'bg-safe-500/15 border-safe-500/30 text-safe-300 hover:bg-safe-500/25 active:scale-95'
-                        : 'bg-surface-700 border-white/10 text-slate-500 hover:text-slate-300'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100 active:scale-95'
+                        : 'bg-slate-100 border-slate-200 text-slate-400'
                     )}
                     aria-label={`Call ${contact.name}`}
                   >
-                    <Phone className="w-3.5 h-3.5" />
+                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
                     <span className="hidden sm:inline">Call</span>
                   </a>
 
                   {/* Enable / Disable Toggle */}
                   <button
                     onClick={() => handleToggle(contact)}
-                    className="p-1.5 text-slate-400 hover:text-white transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors"
                     title={contact.enabled ? 'Disable contact notifications' : 'Enable contact notifications'}
                     aria-label={contact.enabled ? 'Disable contact' : 'Enable contact'}
                   >
                     {contact.enabled ? (
-                      <ToggleRight className="w-5 h-5 text-safe-400" />
+                      <ToggleRight className="w-5 h-5 text-emerald-600" />
                     ) : (
-                      <ToggleLeft className="w-5 h-5 text-slate-500" />
+                      <ToggleLeft className="w-5 h-5 text-slate-400" />
                     )}
                   </button>
 
                   {/* Edit */}
                   <button
                     onClick={() => handleOpenEdit(contact)}
-                    className="p-1.5 text-slate-400 hover:text-white transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-slate-700 transition-colors"
                     title="Edit contact"
                     aria-label="Edit contact"
                   >
@@ -251,7 +252,7 @@ export function EmergencyCircle({ className, showTitle = true }: EmergencyCircle
                   {/* Remove */}
                   <button
                     onClick={() => handleRemove(contact)}
-                    className="p-1.5 text-slate-400 hover:text-danger-400 transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
                     title="Remove contact"
                     aria-label="Remove contact"
                   >
@@ -264,13 +265,13 @@ export function EmergencyCircle({ className, showTitle = true }: EmergencyCircle
         )}
       </div>
 
-      {/* Footer info note */}
-      <div className="px-5 py-3 bg-surface-900/60 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500">
+      {/* Footer Info */}
+      <div className="px-6 py-3.5 bg-blush-50/70 border-t border-pink-100 flex items-center justify-between text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5 text-primary-400" />
+          <ShieldCheck className="w-3.5 h-3.5 text-primary-500" />
           Encrypted & strictly authorized by you
         </span>
-        <span>{contacts.length} / 5 configured</span>
+        <span className="font-bold text-primary-700">{contacts.length} / 5 configured</span>
       </div>
 
       {/* Add / Edit Contact Modal */}

@@ -17,8 +17,8 @@ export function Card({ children, className, glass = true, hover = false, onClick
     <Tag
       onClick={onClick}
       className={cn(
-        glass ? 'glass-card' : 'bg-surface-800 rounded-2xl border border-white/10',
-        hover && 'hover:border-primary-500/30 hover:shadow-glow-primary/10 transition-all duration-300 cursor-pointer',
+        glass ? 'glass-card' : 'bg-white rounded-3xl border border-primary-100 shadow-card',
+        hover && 'glass-card-hover cursor-pointer hover:border-primary-300 hover:shadow-card-hover',
         onClick && 'cursor-pointer',
         'animate-fade-in',
         className,
@@ -33,7 +33,7 @@ export function Card({ children, className, glass = true, hover = false, onClick
 
 export function CardHeader({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('px-5 pt-5 pb-3', className)}>
+    <div className={cn('px-6 pt-6 pb-3', className)}>
       {children}
     </div>
   );
@@ -41,7 +41,7 @@ export function CardHeader({ children, className }: { children: React.ReactNode;
 
 export function CardBody({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('px-5 pb-5', className)}>
+    <div className={cn('px-6 pb-6', className)}>
       {children}
     </div>
   );
@@ -49,7 +49,7 @@ export function CardBody({ children, className }: { children: React.ReactNode; c
 
 export function CardFooter({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('px-5 pb-5 pt-3 border-t border-white/10', className)}>
+    <div className={cn('px-6 pb-6 pt-4 border-t border-primary-100/70', className)}>
       {children}
     </div>
   );
