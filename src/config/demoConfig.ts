@@ -50,7 +50,7 @@ export type OpeningStatus = 'OPEN' | 'CLOSED' | 'OPEN_24_7' | 'UNKNOWN';
 export interface SafetyPlace {
   id: string;
   name: string;
-  category: 'POLICE' | 'HOSPITAL' | 'PHARMACY' | 'HOTEL' | 'FUEL' | 'SHOP' | 'CAFE_RESTAURANT' | 'OTHER_PUBLIC';
+  category: 'POLICE' | 'HOSPITAL' | 'PHARMACY' | 'HOTEL' | 'FUEL' | 'SHOP' | 'CAFE_RESTAURANT' | 'BANK_ATM' | 'TRANSIT' | 'OTHER_PUBLIC';
   latitude: number;
   longitude: number;
   distanceFromRouteMeters: number;
