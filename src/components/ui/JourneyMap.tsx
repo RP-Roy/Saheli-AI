@@ -20,13 +20,18 @@ interface LatLng { lat: number; lng: number; }
 interface JourneyMapProps {
   origin?: LatLng & { label: string };
   destination?: LatLng & { label: string };
-  currentPosition: LatLng;
+  currentPosition?: LatLng | null;
+  hasLocation?: boolean;
   waypoints: Array<LatLng & { label?: string }>;
   safetyPoints?: import('../../config/demoConfig').SafetyPlace[];
   riskLevel: RiskLevel;
   isActive?: boolean;
   className?: string;
 }
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const INDIA_CENTER: [number, number] = [20.5937, 78.9629];
+const INDIA_ZOOM = 5;
 
 // ─── Status colors ────────────────────────────────────────────────────────────
 
@@ -66,16 +71,24 @@ function safetyPointHtml(type: string) {
   const icon = 
     type === 'POLICE' ? '👮' :
     type === 'HOSPITAL' ? '🏥' :
-    type === 'PHARMACY' ? '🏪' :
+    type === 'PHARMACY' ? '💊' :
+    type === 'BANK_ATM' ? '🏧' :
     type === 'FUEL' ? '⛽' :
     type === 'HOTEL' ? '🏨' :
-    type === 'SHOP' ? '🛍️' :
-    type === 'CAFE_RESTAURANT' || type === 'OTHER_PUBLIC' ? '☕' : '📍';
+    type === 'TRANSIT' ? '🚉' :
+    type === 'CAFE_RESTAURANT' ? '☕' :
+    type === 'SHOP' ? '🛍️' : '📍';
   
   const borderColor = 
     type === 'POLICE' ? '#3b82f6' :
     type === 'HOSPITAL' ? '#ef4444' :
-    type === 'PHARMACY' ? '#10b981' : '#6366f1';
+    type === 'PHARMACY' ? '#10b981' :
+    type === 'BANK_ATM' ? '#06b6d4' :
+    type === 'FUEL' ? '#f59e0b' :
+    type === 'HOTEL' ? '#8b5cf6' :
+    type === 'TRANSIT' ? '#6366f1' :
+    type === 'CAFE_RESTAURANT' ? '#f97316' :
+    type === 'SHOP' ? '#ec4899' : '#64748b';
 
   return `
     <div style="width:30px;height:30px;border-radius:10px;background:#0f172a;border:2px solid ${borderColor};
@@ -100,7 +113,7 @@ function injectKeyframes() {
 }
 
 export function JourneyMap({
-  origin, destination, currentPosition,
+  origin, destination, currentPosition, hasLocation = true,
   waypoints, safetyPoints = [], riskLevel, isActive = true, className = '',
 }: JourneyMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -121,19 +134,32 @@ export function JourneyMap({
     if (!containerRef.current || mapRef.current) return;
     injectKeyframes();
 
+    const initialCenter: [number, number] = (hasLocation && currentPosition)
+      ? [currentPosition.lat, currentPosition.lng]
+      : INDIA_CENTER;
+    const initialZoom = (hasLocation && currentPosition) ? 14 : INDIA_ZOOM;
+
     const map = L.map(containerRef.current, {
-      center: [currentPosition.lat, currentPosition.lng],
-      zoom: 13,
+      center: initialCenter,
+      zoom: initialZoom,
       zoomControl: false,
       attributionControl: false,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    const geoapifyKey = import.meta.env.VITE_GEOAPIFY_API_KEY;
+    const tileUrl = geoapifyKey
+      ? `https://maps.geoapify.com/v1/tile/dark-matter-purple-roads/{z}/{x}/{y}.png?apiKey=${geoapifyKey}`
+      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const tileAttribution = geoapifyKey
+      ? '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://www.geoapify.com/">Geoapify</a>'
+      : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+    L.tileLayer(tileUrl, {
       maxZoom: 19,
     }).addTo(map);
 
     L.control.attribution({ position: 'bottomright' })
-      .addAttribution('© <a href="https://openstreetmap.org">OSM</a> © <a href="https://carto.com">CARTO</a>')
+      .addAttribution(tileAttribution)
       .addTo(map);
 
     L.control.zoom({ position: 'topright' }).addTo(map);
@@ -189,19 +215,24 @@ export function JourneyMap({
     }
 
     // --- Current Position Marker ---
-    const posColor = RISK_COLOR[riskLevel] || RISK_COLOR.SAFE;
-    const posIcon = L.divIcon({ html: currentPositionHtml(posColor), className: '', iconSize: [40, 40], iconAnchor: [20, 20] });
-    
-    if (!layers.posMarker) {
-      layers.posMarker = L.marker([currentPosition.lat, currentPosition.lng], {
-        icon: posIcon,
-        zIndexOffset: 1000,
-      }).addTo(map);
-    } else {
-      layers.posMarker.setLatLng([currentPosition.lat, currentPosition.lng]);
-      layers.posMarker.setIcon(posIcon);
+    if (hasLocation && currentPosition) {
+      const posColor = RISK_COLOR[riskLevel] || RISK_COLOR.SAFE;
+      const posIcon = L.divIcon({ html: currentPositionHtml(posColor), className: '', iconSize: [40, 40], iconAnchor: [20, 20] });
+      
+      if (!layers.posMarker) {
+        layers.posMarker = L.marker([currentPosition.lat, currentPosition.lng], {
+          icon: posIcon,
+          zIndexOffset: 1000,
+        }).addTo(map);
+      } else {
+        layers.posMarker.setLatLng([currentPosition.lat, currentPosition.lng]);
+        layers.posMarker.setIcon(posIcon);
+      }
+      layers.posMarker.bindPopup('You are here');
+    } else if (layers.posMarker) {
+      layers.posMarker.remove();
+      layers.posMarker = null;
     }
-    layers.posMarker.bindPopup('You are here');
 
     // --- Route Polyline ---
     if (hasRoute) {
@@ -219,7 +250,8 @@ export function JourneyMap({
     }
 
     // --- Completed Polyline ---
-    if (hasRoute && isActive && origin) {
+    if (hasRoute && isActive && origin && currentPosition) {
+      const posColor = RISK_COLOR[riskLevel] || RISK_COLOR.SAFE;
       const completedPoints: L.LatLngExpression[] = [
         [origin.lat, origin.lng],
         [currentPosition.lat, currentPosition.lng],
@@ -258,14 +290,16 @@ export function JourneyMap({
       });
     }
 
-    // --- Fit Bounds ---
+    // --- Fit Bounds / Map Center ---
     if (hasRoute && layers.routeLine && layers.routeLine.getBounds().isValid()) {
       map.fitBounds(layers.routeLine.getBounds(), { padding: [50, 50], maxZoom: 16 });
-    } else {
+    } else if (hasLocation && currentPosition) {
       map.setView([currentPosition.lat, currentPosition.lng], 14);
+    } else {
+      map.setView(INDIA_CENTER, INDIA_ZOOM);
     }
 
-  }, [origin, destination, currentPosition, waypoints, safetyPoints, riskLevel, isActive]);
+  }, [origin, destination, currentPosition, hasLocation, waypoints, safetyPoints, riskLevel, isActive]);
 
   return (
     <div className={`relative ${className}`} style={{ minHeight: '100%' }}>
@@ -273,12 +307,16 @@ export function JourneyMap({
       <button 
         onClick={(e) => {
           e.preventDefault();
-          if (mapRef.current && currentPosition) {
-            mapRef.current.setView([currentPosition.lat, currentPosition.lng], 16);
+          if (mapRef.current) {
+            if (hasLocation && currentPosition) {
+              mapRef.current.setView([currentPosition.lat, currentPosition.lng], 16);
+            } else {
+              mapRef.current.setView(INDIA_CENTER, INDIA_ZOOM);
+            }
           }
         }}
         className="absolute bottom-6 right-4 z-[400] bg-surface-800 text-white p-2.5 rounded-full shadow-lg border border-white/10 hover:bg-surface-700 transition-colors"
-        title="Recenter on me"
+        title={hasLocation && currentPosition ? "Recenter on me" : "View whole India map"}
       >
         <Locate className="w-5 h-5 text-primary-400" />
       </button>

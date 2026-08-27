@@ -1,45 +1,20 @@
 import { useState } from 'react';
 import {
-  User, Bell, ChevronRight,
-  Lock, Eye, EyeOff, FlaskConical, Info,
-  LogOut, MapPin, Smartphone, Check,
+  User, Phone, ChevronRight,
+  Lock, Eye, EyeOff, Plus, Trash2, FlaskConical, Info,
+  LogOut, Smartphone,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useApp } from '../context/AppContext';
 import { useDemo } from '../context/DemoContext';
-import { EmergencyCircle } from '../components/emergency/EmergencyCircle';
+import { TRUSTED_CONTACTS, type Contact } from '../data/mockData';
 import { cn } from '../utils/formatters';
 
 export default function Settings() {
-  const { user, notificationsEnabled, setNotificationsEnabled } = useApp();
+  const { user } = useApp();
   const { isDemoMode, toggleDemoMode } = useDemo();
   const [showPhone, setShowPhone] = useState(false);
-  const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
-  const [notifications, setNotifications] = useState({
-    pushEnabled: notificationsEnabled,
-    safetyCheckins: true,
-    smsAlerts: true,
-    weeklyDigest: false,
-  });
-  const [savedNotifications, setSavedNotifications] = useState(false);
-
-  const toggleNotification = (key: keyof typeof notifications) => {
-    setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
-    setSavedNotifications(false);
-  };
-
-  const requestLocation = async () => {
-    try {
-      const perm = await navigator.permissions.query({ name: 'geolocation' });
-      setLocationPermission(perm.state as 'granted' | 'denied' | 'prompt');
-      if (perm.state !== 'denied') {
-        navigator.geolocation.getCurrentPosition(() => setLocationPermission('granted'), () => setLocationPermission('denied'));
-      }
-    } catch {
-      setLocationPermission('denied');
-    }
-  };
 
   return (
     <div className="page-wrapper space-y-5 max-w-2xl">
@@ -106,108 +81,21 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* ── Emergency Circle ── */}
-      <EmergencyCircle />
-
-      {/* ── Notifications ── */}
+      {/* ── Trusted Circle ── */}
       <section className="glass-card overflow-hidden">
         <div className="px-5 py-3.5 border-b border-white/10 flex items-center gap-2">
-          <Bell className="w-4 h-4 text-primary-400" />
-          <h2 className="text-sm font-bold text-white">Notifications</h2>
-          {savedNotifications && (
-            <div className="ml-auto flex items-center gap-1 text-xs text-safe-400">
-              <Check className="w-3.5 h-3.5" /> Saved
-            </div>
-          )}
+          <Phone className="w-4 h-4 text-primary-400" />
+          <h2 className="text-sm font-bold text-white">Trusted Circle</h2>
+          <Button variant="outline" size="sm" className="ml-auto" leftIcon={<Plus className="w-3.5 h-3.5" />}>Add</Button>
         </div>
-        <div className="divide-y divide-white/5 px-5">
-          <ToggleRow
-            id="toggle-push"
-            label="Push Notifications"
-            description="Safety alerts and check-in reminders"
-            value={notifications.pushEnabled}
-            onToggle={() => { toggleNotification('pushEnabled'); setNotificationsEnabled(!notifications.pushEnabled); }}
-          />
-          <ToggleRow
-            id="toggle-safety-checkins"
-            label="Safety Check-ins"
-            description="Discreet prompts during unusual journey behavior"
-            value={notifications.safetyCheckins}
-            onToggle={() => toggleNotification('safetyCheckins')}
-          />
-          <ToggleRow
-            id="toggle-sms"
-            label="SMS Alerts"
-            description="Notify trusted circle via SMS during incidents"
-            value={notifications.smsAlerts}
-            onToggle={() => toggleNotification('smsAlerts')}
-          />
-          <ToggleRow
-            id="toggle-digest"
-            label="Weekly Safety Digest"
-            description="Weekly summary of your journeys and safety tips"
-            value={notifications.weeklyDigest}
-            onToggle={() => toggleNotification('weeklyDigest')}
-          />
-        </div>
-        <div className="px-5 py-3">
-          <Button variant="outline" size="sm" onClick={() => setSavedNotifications(true)}>Save Preferences</Button>
-        </div>
-      </section>
-
-      {/* ── Location & Privacy ── */}
-      <section className="glass-card overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-white/10 flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-primary-400" />
-          <h2 className="text-sm font-bold text-white">Location & Privacy</h2>
-        </div>
-        <div className="p-5 space-y-4">
-          {/* Location Permission */}
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-surface-700/40 border border-white/5">
-            <div className={cn(
-              'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
-              locationPermission === 'granted' ? 'bg-safe-500/20' : 'bg-caution-500/20',
-            )}>
-              <MapPin className={cn('w-5 h-5', locationPermission === 'granted' ? 'text-safe-400' : 'text-caution-400')} />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-slate-200">Location Access</p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {locationPermission === 'granted' ? 'Active — monitoring your position' :
-                 locationPermission === 'denied'  ? 'Denied — some features will be limited' :
-                 'Required for journey monitoring'}
-              </p>
-              {locationPermission !== 'granted' && (
-                <button onClick={requestLocation} className="text-xs text-primary-400 hover:text-primary-300 mt-1.5 transition-colors">
-                  Grant permission →
-                </button>
-              )}
-            </div>
-            <div className={cn('px-2 py-1 rounded-lg text-[10px] font-bold border flex-shrink-0',
-              locationPermission === 'granted' ? 'bg-safe-500/15 border-safe-500/30 text-safe-300' :
-              locationPermission === 'denied'  ? 'bg-danger-500/15 border-danger-500/30 text-danger-300' :
-              'bg-caution-500/15 border-caution-500/30 text-caution-300'
-            )}>
-              {locationPermission === 'granted' ? 'ON' : locationPermission === 'denied' ? 'OFF' : 'PENDING'}
-            </div>
-          </div>
-
-          {/* Privacy rows */}
-          {[
-            { label: 'Data Encryption',      value: 'AES-256 encrypted' },
-            { label: 'Location Storage',      value: 'During journey only' },
-            { label: 'AI Conversations',      value: 'Not stored' },
-            { label: 'Data Sharing',          value: 'Never with third parties' },
-          ].map(({ label, value }) => (
-            <div key={label} className="flex items-center justify-between py-1">
-              <p className="text-sm text-slate-400">{label}</p>
-              <p className="text-sm font-medium text-slate-200">{value}</p>
-            </div>
+        <div className="divide-y divide-white/5">
+          {TRUSTED_CONTACTS.map(contact => (
+            <TrustedContactRow key={contact.id} contact={contact} />
           ))}
         </div>
       </section>
 
-      {/* ── App Info & Logout ── */}
+      {/* ── App Info ── */}
       <section className="glass-card overflow-hidden">
         <div className="divide-y divide-white/5">
           <SettingsRow icon={<Info className="w-4 h-4 text-slate-500" />} label="About Saheli AI" action="chevron" />
@@ -266,6 +154,23 @@ function SettingsRow({ icon, label, value, action }: {
       <p className="text-sm text-slate-300 flex-1">{label}</p>
       {value && <p className="text-xs text-slate-500">{value}</p>}
       {action === 'chevron' && <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0" />}
+    </div>
+  );
+}
+
+function TrustedContactRow({ contact }: { contact: Contact }) {
+  return (
+    <div className="flex items-center gap-3 px-5 py-3.5">
+      <div className={cn('w-9 h-9 rounded-full bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white flex-shrink-0', contact.color)}>
+        {contact.avatar}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-slate-200">{contact.name}</p>
+        <p className="text-xs text-slate-500">{contact.relation} · {contact.phone}</p>
+      </div>
+      <button className="w-7 h-7 rounded-lg bg-surface-600/60 hover:bg-danger-600/20 border border-white/10 hover:border-danger-500/30 flex items-center justify-center text-slate-500 hover:text-danger-400 transition-all">
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 }

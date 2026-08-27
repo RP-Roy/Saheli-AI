@@ -136,7 +136,7 @@ export const routeService = {
       }));
 
       // Fetch nearby safety places specifically for this route geometry
-      const { relevantPlaces, summary } = await safetyPlacesService.findSafetyPlacesAroundRoute(route.geometry.coordinates, 300);
+      const { relevantPlaces, summary } = await safetyPlacesService.findSafetyPlacesAroundRoute(route.geometry.coordinates, 600);
       
       // Calculate deterministic score
       const safetyResult = routeSafetyEngine.calculateRouteSafety(summary, relevantPlaces, { detourRatio });

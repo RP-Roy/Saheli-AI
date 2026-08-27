@@ -181,6 +181,8 @@ export default function Journey() {
   };
 
   // Map display data
+  const hasLocation = journey.isActive || isDemoMode || Boolean(loc.latitude && loc.longitude);
+
   const mapOrigin = phase !== 'PLANNING'
     ? { lat: selectedRoute.waypoints[0].lat, lng: selectedRoute.waypoints[0].lng, label: isDemoMode ? origin.split(',')[0] : 'Current Location' }
     : (isDemoMode ? { lat: selectedRoute.waypoints[0].lat, lng: selectedRoute.waypoints[0].lng, label: 'College' } : (loc.latitude && loc.longitude ? { lat: loc.latitude, lng: loc.longitude, label: 'Your Location' } : undefined));
@@ -191,10 +193,11 @@ export default function Journey() {
 
   const mapPos = journey.isActive 
     ? (journey.currentPosition ?? selectedRoute.waypoints[0]) 
-    : (isDemoMode ? selectedRoute.waypoints[0] : (loc.latitude && loc.longitude ? { lat: loc.latitude, lng: loc.longitude } : selectedRoute.waypoints[0]));
+    : (isDemoMode ? selectedRoute.waypoints[0] : (loc.latitude && loc.longitude ? { lat: loc.latitude, lng: loc.longitude } : null));
 
   const mapRoute = phase === 'PLANNING' ? [] : (journey.isActive ? journey.plannedRoute : selectedRoute.waypoints);
-  const safetyPoints = phase === 'PLANNING' ? [] : (journey.isActive ? journey.safetyPoints : selectedRoute.safetyPoints);  const riskLevel = journey.riskLevel;
+  const safetyPoints = phase === 'PLANNING' ? [] : (journey.isActive ? journey.safetyPoints : selectedRoute.safetyPoints);
+  const riskLevel = journey.riskLevel;
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100dvh-9rem)] lg:h-[calc(100dvh-4.5rem)] overflow-hidden">
@@ -204,6 +207,7 @@ export default function Journey() {
           origin={mapOrigin}
           destination={mapDest}
           currentPosition={mapPos}
+          hasLocation={hasLocation}
           waypoints={mapRoute}
           safetyPoints={safetyPoints}
           riskLevel={riskLevel}
