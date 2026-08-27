@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ShieldCheck, User, Heart, Phone as PhoneIcon, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import type { TrustedContactData } from '../../services/trustedContactService';
@@ -107,7 +108,7 @@ export function ContactModal({
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in">
       <div
         className="relative w-full max-w-md bg-white border border-pink-200/80 rounded-3xl p-6 sm:p-7 shadow-2xl overflow-hidden animate-slide-up"
@@ -259,6 +260,7 @@ export function ContactModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

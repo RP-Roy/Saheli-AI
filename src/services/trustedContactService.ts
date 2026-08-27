@@ -17,7 +17,7 @@ const LOCAL_STORAGE_KEY = 'saheli_trusted_contacts';
 
 const DEFAULT_DEMO_CONTACTS: TrustedContactData[] = [
   {
-    id: 'c1',
+    id: 'contact-demo-1',
     user_id: 'demo-user',
     name: 'Priya Sharma',
     relationship: 'Mother',
@@ -28,22 +28,22 @@ const DEFAULT_DEMO_CONTACTS: TrustedContactData[] = [
     created_at: new Date().toISOString(),
   },
   {
-    id: 'c2',
+    id: 'contact-demo-2',
     user_id: 'demo-user',
-    name: 'Arjun Mehta',
+    name: 'Ankit Verma',
     relationship: 'Brother',
-    phone: '+91 98765 43211',
+    phone: '+91 98123 45678',
     enabled: true,
     consent_given: true,
     consent_timestamp: new Date().toISOString(),
     created_at: new Date().toISOString(),
   },
   {
-    id: 'c3',
+    id: 'contact-demo-3',
     user_id: 'demo-user',
-    name: 'Sneha Reddy',
+    name: 'Sneha Patel',
     relationship: 'Best Friend',
-    phone: '+91 87654 32109',
+    phone: '+91 97654 32109',
     enabled: true,
     consent_given: true,
     consent_timestamp: new Date().toISOString(),
@@ -51,30 +51,26 @@ const DEFAULT_DEMO_CONTACTS: TrustedContactData[] = [
   },
 ];
 
-let memoryContacts: TrustedContactData[] = [...DEFAULT_DEMO_CONTACTS];
-
 function getLocalContacts(): TrustedContactData[] {
-  if (typeof localStorage !== 'undefined') {
-    try {
-      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (!raw) return DEFAULT_DEMO_CONTACTS;
-      return JSON.parse(raw);
-    } catch {
-      return DEFAULT_DEMO_CONTACTS;
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(DEFAULT_DEMO_CONTACTS));
+      return [...DEFAULT_DEMO_CONTACTS];
     }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [...DEFAULT_DEMO_CONTACTS];
+  } catch {
+    return [...DEFAULT_DEMO_CONTACTS];
   }
-  return memoryContacts;
 }
 
 function saveLocalContacts(contacts: TrustedContactData[]) {
-  if (typeof localStorage !== 'undefined') {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(contacts));
-    } catch {
-      // Ignore storage quota errors in sandbox
-    }
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(contacts));
+  } catch (err) {
+    console.warn('Failed to persist contacts in localStorage:', err);
   }
-  memoryContacts = [...contacts];
 }
 
 export function maskPhoneNumber(phone: string): string {
@@ -108,12 +104,19 @@ export const trustedContactService = {
 
       if (error) {
         // Fallback to local contacts if table doesn't exist yet or connection fails
-        return { data: getLocalContacts(), error };
+        console.warn('Supabase trusted_contacts query error, falling back to local store:', error.message);
+        return { data: getLocalContacts(), error: null };
+      }
+
+      // If remote table is empty, seed or return local contacts
+      if (!data || data.length === 0) {
+        return { data: getLocalContacts(), error: null };
       }
 
       return { data: data as TrustedContactData[], error: null };
     } catch (err: any) {
-      return { data: getLocalContacts(), error: err };
+      console.warn('Error fetching trusted contacts, falling back to local store:', err);
+      return { data: getLocalContacts(), error: null };
     }
   },
 
@@ -147,12 +150,12 @@ export const trustedContactService = {
 
     try {
       // Check existing count in Supabase
-      const { count } = await supabase
+      const { count, error: countError } = await supabase
         .from('trusted_contacts')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', data.user_id);
 
-      if ((count || 0) >= 5) {
+      if (!countError && (count || 0) >= 5) {
         return { data: null, error: new Error('Maximum limit of 5 emergency contacts reached.') };
       }
 
@@ -162,9 +165,33 @@ export const trustedContactService = {
         .select()
         .single();
 
-      return { data: inserted as TrustedContactData, error };
+      if (error) {
+        // Fallback to local storage if remote table is missing or fails
+        console.warn('Supabase insert failed, saving to local store:', error.message);
+        const contacts = getLocalContacts();
+        if (contacts.length >= 5) {
+          return { data: null, error: new Error('Maximum limit of 5 emergency contacts reached.') };
+        }
+        const newContact: TrustedContactData = {
+          ...payload,
+          id: `contact-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        };
+        contacts.push(newContact);
+        saveLocalContacts(contacts);
+        return { data: newContact, error: null };
+      }
+
+      return { data: inserted as TrustedContactData, error: null };
     } catch (err: any) {
-      return { data: null, error: err };
+      console.warn('Supabase addContact exception, saving to local store:', err);
+      const contacts = getLocalContacts();
+      const newContact: TrustedContactData = {
+        ...payload,
+        id: `contact-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      };
+      contacts.push(newContact);
+      saveLocalContacts(contacts);
+      return { data: newContact, error: null };
     }
   },
 
@@ -193,9 +220,29 @@ export const trustedContactService = {
         .select()
         .single();
 
-      return { data: data as TrustedContactData, error };
+      if (error) {
+        console.warn('Supabase update failed, updating local store:', error.message);
+        const contacts = getLocalContacts();
+        const idx = contacts.findIndex(c => c.id === id);
+        if (idx !== -1) {
+          contacts[idx] = { ...contacts[idx], ...updatedPayload };
+          saveLocalContacts(contacts);
+          return { data: contacts[idx], error: null };
+        }
+        return { data: null, error: null };
+      }
+
+      return { data: data as TrustedContactData, error: null };
     } catch (err: any) {
-      return { data: null, error: err };
+      console.warn('Supabase updateContact exception, updating local store:', err);
+      const contacts = getLocalContacts();
+      const idx = contacts.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        contacts[idx] = { ...contacts[idx], ...updatedPayload };
+        saveLocalContacts(contacts);
+        return { data: contacts[idx], error: null };
+      }
+      return { data: null, error: null };
     }
   },
 
@@ -204,9 +251,11 @@ export const trustedContactService = {
   },
 
   async removeContact(id: string): Promise<{ data: null; error: any }> {
+    // Always clean up local store
+    const contacts = getLocalContacts().filter(c => c.id !== id);
+    saveLocalContacts(contacts);
+
     if (!isSupabaseConfigured()) {
-      const contacts = getLocalContacts().filter(c => c.id !== id);
-      saveLocalContacts(contacts);
       return { data: null, error: null };
     }
 
@@ -216,13 +265,14 @@ export const trustedContactService = {
         .delete()
         .eq('id', id);
 
-      // Also clean up local store if any
-      const contacts = getLocalContacts().filter(c => c.id !== id);
-      saveLocalContacts(contacts);
+      if (error) {
+        console.warn('Supabase delete failed, cleaned local store:', error.message);
+      }
 
-      return { data: null, error };
+      return { data: null, error: null };
     } catch (err: any) {
-      return { data: null, error: err };
+      console.warn('Supabase removeContact exception:', err);
+      return { data: null, error: null };
     }
   }
 };

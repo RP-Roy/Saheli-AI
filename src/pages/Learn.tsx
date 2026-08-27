@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BookOpen, Play, Search, Clock, X, ExternalLink, ShieldAlert, CheckCircle2, MessageSquareText, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '../components/ui/Badge';
@@ -290,7 +291,7 @@ export default function Learn() {
       )}
 
       {/* ── Video Player Modal ── */}
-      {selectedVideo && (
+      {selectedVideo && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in"
           onClick={e => e.target === e.currentTarget && setSelectedVideo(null)}
@@ -419,7 +420,8 @@ export default function Learn() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

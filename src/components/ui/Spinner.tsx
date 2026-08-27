@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../utils/formatters';
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ const MODAL_SIZES = {
 export function Modal({ isOpen, onClose, title, children, className, size = 'md' }: ModalProps) {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
@@ -81,6 +82,7 @@ export function Modal({ isOpen, onClose, title, children, className, size = 'md'
         )}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
