@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
-  Navigation, ShieldCheck, BookOpen, MessageCircle,
+  Navigation, BookOpen, MessageCircle,
   AlertOctagon, MapPin, Clock, ChevronRight, Zap,
-  TrendingUp, Users, Heart, Star, Shield,
+  Users, Star,
 } from 'lucide-react';
 import { useDemo } from '../context/DemoContext';
 import { useApp } from '../context/AppContext';
 import { RouteSafetyScore } from '../components/ui/RouteSafetyScore';
 import { RiskBadge } from '../components/ui/Badge';
 import {
-  TRUSTED_CONTACTS, RECENT_EVENTS, SAFETY_TIPS,
-  ACTIVE_JOURNEY, type SafetyEvent,
+  TRUSTED_CONTACTS, SAFETY_TIPS,
+  ACTIVE_JOURNEY,
 } from '../data/mockData';
-import { DEMO_PAST_JOURNEYS } from '../data/demoJourney';
-import { cn, formatTime } from '../utils/formatters';
+import { cn } from '../utils/formatters';
 import type { RiskLevel } from '../config/appConfig';
 
 export default function Dashboard() {
@@ -34,7 +33,7 @@ export default function Dashboard() {
   const displayJourney = journey.isActive ? journey : null;
 
   return (
-    <div className="page-wrapper space-y-5 max-w-4xl">
+    <div className="page-wrapper space-y-6 max-w-4xl">
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between">
@@ -53,11 +52,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Main Journey Card ── */}
-      {displayJourney ? (
+      {/* ── Active Journey Banner (when active) ── */}
+      {displayJourney && (
         <ActiveJourneyCard journey={displayJourney} />
-      ) : (
-        <PlannerCard />
       )}
 
       {/* ── Quick Actions ── */}
@@ -100,21 +97,6 @@ export default function Dashboard() {
             border="border-danger-500/30"
             iconBg="bg-danger-500/20 text-danger-300"
           />
-        </div>
-      </div>
-
-      {/* ── Recent Journeys ── */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="section-title">Recent Journeys</h2>
-          <Link to="/journey" className="flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 font-medium transition-colors">
-            View all <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-        <div className="glass-card divide-y divide-white/5">
-          {DEMO_PAST_JOURNEYS.slice(0, 3).map((journey, i) => (
-            <PastJourneyRow key={journey.id} journey={journey} isLast={i === 2} />
-          ))}
         </div>
       </div>
 
@@ -231,52 +213,7 @@ function ActiveJourneyCard({ journey }: { journey: typeof ACTIVE_JOURNEY | Retur
   );
 }
 
-// ─── Planner Card ─────────────────────────────────────────────────────────────
-
-function PlannerCard() {
-  const navigate = useNavigate();
-  return (
-    <div className="relative overflow-hidden rounded-3xl border border-primary-500/30 bg-gradient-to-br from-surface-800 to-surface-900 p-6 shadow-xl">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
-      <h2 className="text-xl font-bold text-white mb-5 relative">Where are you going?</h2>
-      <div className="flex flex-col sm:flex-row gap-3 relative z-10">
-        <div className="relative flex-1">
-          <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Enter destination..." 
-            className="w-full bg-surface-900/80 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-primary-500 transition-colors cursor-pointer"
-            onClick={() => navigate('/journey')}
-            readOnly
-          />
-        </div>
-        <button 
-          onClick={() => navigate('/journey')}
-          className="bg-primary-600 hover:bg-primary-500 text-white px-6 py-3.5 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
-        >
-          <Navigation className="w-4 h-4" /> Find Safer Route
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function StatPill({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
-  return (
-    <div className="glass-card p-4 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        {icon}
-        <TrendingUp className="w-3 h-3 text-slate-600" />
-      </div>
-      <div>
-        <p className="text-xl font-bold text-white">{value}</p>
-        <p className="text-xs text-slate-400">{label}</p>
-      </div>
-    </div>
-  );
-}
 
 function QuickAction({ to, icon, label, description, gradient, border, iconBg }: {
   to: string; icon: React.ReactNode; label: string; description: string;
@@ -299,36 +236,5 @@ function QuickAction({ to, icon, label, description, gradient, border, iconBg }:
         <p className="text-xs text-slate-400">{description}</p>
       </div>
     </Link>
-  );
-}
-
-const SEVERITY_CONFIG = {
-  success:  { dot: 'bg-safe-500',    text: 'text-safe-400'    },
-  warning:  { dot: 'bg-caution-500', text: 'text-caution-400' },
-  critical: { dot: 'bg-danger-500',  text: 'text-danger-400 animate-pulse'  },
-  info:     { dot: 'bg-primary-500', text: 'text-primary-400' },
-};
-
-function PastJourneyRow({ journey, isLast }: { journey: any; isLast: boolean }) {
-  return (
-    <div className={cn('flex items-center gap-4 px-5 py-4', !isLast && '')}>
-      <div className="w-10 h-10 rounded-xl bg-surface-700/50 flex items-center justify-center flex-shrink-0">
-        <Navigation className="w-4 h-4 text-primary-400" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <p className="text-sm font-semibold text-white truncate">{journey.destination}</p>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <span className="truncate max-w-[120px]">{journey.origin}</span>
-          <span>•</span>
-          <span>{journey.durationMins} min</span>
-        </div>
-      </div>
-      <div className="flex-shrink-0 text-right">
-         <RiskBadge level={journey.riskLevel} />
-         <p className="text-[10px] text-slate-500 mt-1">{journey.date.split(',')[0]}</p>
-      </div>
-    </div>
   );
 }
