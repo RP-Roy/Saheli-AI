@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   AlertOctagon, Phone, MapPin, Clock, CheckCircle,
   Shield, Share2, RefreshCw, Check,
-  AlertTriangle, PhoneCall, Info, Navigation2
+  AlertTriangle, PhoneCall, Info, Navigation2, MessageSquare
 } from 'lucide-react';
 import { useDemo } from '../context/DemoContext';
 import { useApp } from '../context/AppContext';
@@ -19,7 +19,7 @@ const EMERGENCY_NUMBERS = [
 ];
 
 export default function Emergency() {
-  const { contacts } = useApp();
+  const { contacts, user } = useApp();
   const { isDemoMode, journey, updateRiskLevel } = useDemo();
 
   // SOS and Incident State
@@ -110,6 +110,8 @@ export default function Emergency() {
     // 3. Dispatch Notifications
     const result = await incidentService.sendSOSNotification(incId, {
       demoLocation: { lat: loc.lat, lng: loc.lng, address: loc.address },
+      contacts: activeContacts,
+      userName: user.name,
     });
 
     setDispatchResult(result);
@@ -129,6 +131,8 @@ export default function Emergency() {
     const result = await incidentService.sendSOSNotification(activeIncidentId, {
       force: true,
       demoLocation: { lat: loc.lat, lng: loc.lng, address: loc.address },
+      contacts: activeContacts,
+      userName: user.name,
     });
     setDispatchResult(result);
     setIsDispatching(false);
@@ -347,11 +351,24 @@ export default function Emergency() {
               </a>
             )}
 
+            {primaryContact && (
+              <a
+                href={`sms:${primaryContact.phone}?body=${encodeURIComponent(
+                  `SAHELI EMERGENCY SOS: I need assistance immediately. My live location: ${locationAddress} (https://maps.google.com/?q=${currentCoordinates?.lat || 12.9352},${currentCoordinates?.lng || 77.6890}). Incident: ${activeIncidentId || 'INC-LIVE'}`
+                )}`}
+                className="w-full py-3.5 px-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Send SMS to {primaryContact.name.split(' ')[0]}
+              </a>
+            )}
+
             <Button
               variant="outline"
               leftIcon={<Share2 className="w-4 h-4" />}
               onClick={shareLocation}
               fullWidth
+              className={primaryContact ? 'sm:col-span-2' : ''}
             >
               Share Live Location Link
             </Button>
